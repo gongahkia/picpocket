@@ -1,4 +1,4 @@
-# See Ez
+# PicPocket
 
 Viewing slides shouldn't be a hassle.
 
