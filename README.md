@@ -2,8 +2,8 @@
 
 Viewing slides shouldn't be a hassle.
 
-<div align="centre">
-  <img src="./asset/see.jpeg" align="centre">
+<div align="center">
+  <img src="./asset/see.jpeg" width="30%">
 </div>
 
 ## Do list
