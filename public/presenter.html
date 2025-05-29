@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presenter Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f2f5; color: #333; padding: 20px; box-sizing: border-box; }
+        .container { background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 600px; width: 100%; box-sizing: border-box; }
+        h1 { color: #007bff; margin-bottom: 20px; }
+        #qrCode { margin: 20px auto; border: 1px solid #ddd; padding: 10px; display: inline-block; }
+        .buttons-group { display: flex; justify-content: center; margin-top: 20px; gap: 15px; }
+        .buttons-group button { padding: 12px 25px; font-size: 1em; cursor: pointer; border: none; border-radius: 5px; transition: background-color 0.3s ease; }
+        #startSharingButton { background-color: #007bff; color: white; }
+        #startSharingButton:hover { background-color: #0056b3; }
+        #startSharingButton:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #stopSharingButton { background-color: #dc3545; color: white; }
+        #stopSharingButton:hover { background-color: #c82333; }
+        #stopSharingButton:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #startNewSessionButton { background-color: #6c757d; color: white; display: none; margin-top: 15px; } /* Initially hidden */
+        #startNewSessionButton:hover { background-color: #5a6268; }
+        #status { margin-top: 20px; font-weight: bold; color: #555; }
+        #previewVideo { width: 100%; max-width: 400px; border: 1px solid #ddd; margin-top: 20px; background-color: #000; }
+        #noPermissionMessage { color: red; margin-top: 10px; display: none; }
+        #joinLinkContainer { margin-top: 15px; }
+        #joinLinkContainer a { color: #007bff; text-decoration: none; font-weight: bold; }
+        #joinLinkContainer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Presenter Dashboard</h1>
+        <p>Scan this QR code with audience phones to join:</p>
+        <div id="qrCode"></div>
+        <div id="joinLinkContainer"></div> <div id="status">Loading...</div>
+
+        <div class="buttons-group">
+            <button id="startSharingButton" disabled>Start Sharing Screen</button>
+            <button id="stopSharingButton" disabled>Stop Sharing</button>
+        </div>
+        <button id="startNewSessionButton">Start New Session</button> <p id="noPermissionMessage">Permissions denied. Please allow screen sharing.</p>
+
+        <h2>Your Shared Screen (Preview):</h2>
+        <video id="previewVideo" autoplay muted></video>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const qrCodeDiv = document.getElementById('qrCode');
+        const startSharingButton = document.getElementById('startSharingButton');
+        const stopSharingButton = document.getElementById('stopSharingButton');
+        const startNewSessionButton = document.getElementById('startNewSessionButton');
+        const previewVideo = document.getElementById('previewVideo');
+        const noPermissionMessage = document.getElementById('noPermissionMessage');
+        const joinLinkContainer = document.getElementById('joinLinkContainer');
+
+        // --- Core Variables for Screen Sharing ---
+        let ws;
+        let sessionId;
+        let mediaStream; // To hold the screen share stream
+
+        // Main canvas for capturing full-res image data
+        const captureCanvas = document.createElement('canvas');
+        const ctx = captureCanvas.getContext('2d');
+
+        // Small canvas for efficient change detection (average pixel intensity)
+        const COMPARE_CANVAS_SIZE = 16; // e.g., 16x16 pixels
+        const compareCanvas = document.createElement('canvas');
+        const compareCtx = compareCanvas.getContext('2d');
+        compareCanvas.width = COMPARE_CANVAS_SIZE;
+        compareCanvas.height = COMPARE_CANVAS_SIZE;
+
+        // --- Configuration for Sending & Quality ---
+        const JPEG_QUALITY = 0.7; // JPEG quality (0.0 to 1.0). 0.7-0.8 is usually a good balance.
+        const SEND_INTERVAL_MS = 100; // Send a frame every 100ms (aim for ~10 FPS). Adjust as needed.
+
+        // --- Change Detection Variables ---
+        let lastAvgPixelIntensity = 0;
+        const PIXEL_CHANGE_THRESHOLD_PERCENT = 0.05; // 5% change in average pixel intensity (0.0 to 1.0 range)
+        let sendIntervalId = null; // To hold the setInterval ID for sending frames
+
+        // --- Helper Functions ---
+
+        // Calculates the average pixel intensity (luminance) of a canvas
+        function getAveragePixelIntensity(sourceCanvas) {
+            // Draw a downscaled version of the sourceCanvas onto the compareCanvas
+            compareCtx.drawImage(sourceCanvas, 0, 0, COMPARE_CANVAS_SIZE, COMPARE_CANVAS_SIZE);
+            const imageData = compareCtx.getImageData(0, 0, COMPARE_CANVAS_SIZE, COMPARE_CANVAS_SIZE).data;
+
+            let sum = 0;
+            // Iterate over pixel data, calculating luminance (R*0.299 + G*0.587 + B*0.114)
+            for (let i = 0; i < imageData.length; i += 4) { // R, G, B, A
+                sum += imageData[i] * 0.299 + imageData[i+1] * 0.587 + imageData[i+2] * 0.114;
+            }
+            return sum / (COMPARE_CANVAS_SIZE * COMPARE_CANVAS_SIZE);
+        }
+
+        // --- Screen Sharing and Sending Logic ---
+
+        async function startScreenSharing() {
+            noPermissionMessage.style.display = 'none';
+            try {
+                mediaStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always" }, // Show cursor in shared screen
+                    audio: false // We don't need audio for this app
+                });
+
+                previewVideo.srcObject = mediaStream; // Show preview to presenter
+                
+                // Wait for video metadata to load before setting canvas dimensions
+                await new Promise(resolve => previewVideo.onloadedmetadata = resolve);
+
+                // Set capture canvas dimensions to match video stream's actual resolution
+                captureCanvas.width = previewVideo.videoWidth;
+                captureCanvas.height = previewVideo.videoHeight;
+
+                // Start the loop to send frames
+                startSendingFramesLoop();
+
+                statusDiv.textContent = `Session ID: ${sessionId} | Sharing screen...`;
+                startSharingButton.disabled = true;
+                stopSharingButton.disabled = false;
+                startNewSessionButton.style.display = 'none'; // Hide new session button when sharing
+
+                // Listen for track ending (e.g., user stops sharing via browser's native share UI)
+                mediaStream.getTracks().forEach(track => {
+                    track.onended = () => {
+                        console.log('Screen sharing ended by user via browser UI.');
+                        stopPresenting();
+                    };
+                });
+
+            } catch (error) {
+                console.error('Error starting screen sharing:', error);
+                statusDiv.textContent = 'Error starting screen sharing.';
+                if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+                    noPermissionMessage.style.display = 'block';
+                }
+                startSharingButton.disabled = false;
+                stopSharingButton.disabled = true;
+                startNewSessionButton.style.display = 'block'; // Show new session button on error
+            }
+        }
+
+        // This loop handles the actual image capture and sending
+        function startSendingFramesLoop() {
+            // Clear any existing interval to prevent multiple loops
+            if (sendIntervalId) {
+                clearInterval(sendIntervalId);
+            }
+
+            // Set up a new interval to send frames at a controlled rate
+            sendIntervalId = setInterval(() => {
+                // Ensure media stream and WebSocket are active before processing
+                if (!mediaStream || mediaStream.ended || !ws || ws.readyState !== WebSocket.OPEN) {
+                    console.log("Stopping frame sending loop due to stream or WebSocket being closed.");
+                    clearInterval(sendIntervalId); // Stop the interval
+                    sendIntervalId = null;
+                    return;
+                }
+
+                // Draw the current frame from the video stream onto the main capture canvas
+                ctx.drawImage(previewVideo, 0, 0, captureCanvas.width, captureCanvas.height);
+
+                // Calculate the average pixel intensity of the current frame (using the small compareCanvas)
+                const currentAvgPixelIntensity = getAveragePixelIntensity(captureCanvas);
+
+                // Calculate the percentage difference from the last sent average intensity
+                // Normalize to 0-1 range (max intensity is 255)
+                const intensityDiff = Math.abs(currentAvgPixelIntensity - lastAvgPixelIntensity) / 255;
+
+                // Only send a new frame if there's a significant visual change OR
+                // if it's the very first frame to establish the initial display.
+                if (intensityDiff > PIXEL_CHANGE_THRESHOLD_PERCENT || lastAvgPixelIntensity === 0) {
+                    // Convert the full-resolution canvas content to a JPEG data URL
+                    const currentImageDataURL = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
+                    
+                    // Send the JPEG image data URL over the WebSocket
+                    ws.send(currentImageDataURL);
+                    lastAvgPixelIntensity = currentAvgPixelIntensity; // Update for next comparison
+                    // console.log(`Sent frame. Avg Intensity: ${currentAvgPixelIntensity.toFixed(2)}, Diff: ${(intensityDiff*100).toFixed(2)}%`);
+                }
+            }, SEND_INTERVAL_MS);
+        }
+
+        function stopPresenting() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop()); // Stop all media tracks
+                mediaStream = null;
+                previewVideo.srcObject = null; // Clear video preview
+            }
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close(); // Close WebSocket connection (triggers server-side cleanup)
+            }
+            if (sendIntervalId) { // Clear the sending interval
+                clearInterval(sendIntervalId);
+                sendIntervalId = null;
+            }
+            statusDiv.textContent = 'Session ended. Click "Start New Session" or refresh.';
+            startSharingButton.disabled = true; // Disable start sharing
+            stopSharingButton.disabled = true; // Disable stop sharing
+            startNewSessionButton.style.display = 'block'; // Show new session button
+            lastAvgPixelIntensity = 0; // Reset for new session
+        }
+
+
+        // --- Initialization ---
+        async function initializePresenter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            sessionId = urlParams.get('id');
+
+            if (!sessionId) {
+                statusDiv.textContent = 'Error: No session ID found in URL. Please start from the main page.';
+                startNewSessionButton.style.display = 'block'; // Allow starting new session if ID missing
+                return;
+            }
+
+            // Generate QR code with the audience join URL
+            const joinUrl = `${window.location.origin}/join?id=${sessionId}`;
+            
+            new QRCode(qrCodeDiv, {
+                text: joinUrl,
+                width: 180,
+                height: 180,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            // Display the join URL as a clickable link
+            joinLinkContainer.innerHTML = `Audience Link: <a href="${joinUrl}" target="_blank" rel="noopener noreferrer">${joinUrl}</a>`;
+
+            statusDiv.textContent = `Session ID: ${sessionId} | Connecting...`;
+
+            // WebSocket connection to your server
+            ws = new WebSocket(`ws://${window.location.host}/ws/presenter?id=${sessionId}`);
+
+            ws.onopen = () => {
+                statusDiv.textContent = `Session ID: ${sessionId} | Connected. Click 'Start Sharing'.`;
+                console.log('Presenter WebSocket connected.');
+                startSharingButton.disabled = false;
+                stopSharingButton.disabled = true;
+                startNewSessionButton.style.display = 'none'; // Ensure hidden on successful connect
+            };
+
+            ws.onclose = () => {
+                statusDiv.textContent = 'Disconnected. Click "Start New Session" to resume.';
+                console.log('Presenter WebSocket disconnected.');
+                startSharingButton.disabled = true;
+                stopSharingButton.disabled = true;
+                startNewSessionButton.style.display = 'block'; // Show new session button on disconnect
+                stopPresenting(); // Ensure everything is cleaned up
+            };
+
+            ws.onerror = (error) => {
+                statusDiv.textContent = 'Connection error. Check console and your network.';
+                console.error('Presenter WebSocket error:', error);
+                startSharingButton.disabled = true;
+                stopSharingButton.disabled = true;
+                startNewSessionButton.style.display = 'block'; // Show new session button on error
+            };
+
+            // Presenter doesn't receive messages from audience in this design,
+            // but could receive control messages from the server if implemented.
+            ws.onmessage = event => {
+                console.log('Message from server for presenter:', event.data);
+            };
+        }
+
+        // --- Event Listeners ---
+        startSharingButton.onclick = startScreenSharing;
+        stopSharingButton.onclick = stopPresenting;
+        startNewSessionButton.onclick = () => {
+            window.location.href = '/presenter'; // Redirect to generate a new session
+        };
+
+        // Initialize when the page loads
+        initializePresenter();
+    </script>
+</body>
+</html>

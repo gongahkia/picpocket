@@ -1,6 +1,6 @@
-# PicPocket
+# ATTENZIONE PicPocket!!!
 
-Viewing slides shouldn't be a hassle.
+Viewing irl presentations shouldn't be a hassle. From venues with tiny screens, to sitting too far back at church, picpocket is here to help you see clearer!
 
 <div align="center">
   <img src="./asset/see.jpeg" width="30%">

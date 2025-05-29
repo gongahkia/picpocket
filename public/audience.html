@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audience View</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 100vh; margin: 0; background-color: #f0f2f5; color: #333; padding-top: 20px; padding-bottom: 20px;}
+        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 95vw; width: 100%; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
+        h1 { color: #007bff; margin-bottom: 20px; font-size: 1.5em; }
+        #slideDisplay {
+            width: 100%;
+            height: auto; /* Allow height to adjust to image aspect ratio */
+            max-width: 100%; /* Ensure it fits within container */
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            display: block; /* Remove extra space below image */
+            margin: 0 auto;
+            object-fit: contain; /* Scale image to fit element */
+        }
+        #status { margin-top: 15px; font-weight: bold; color: #555; }
+        #saveButton {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            color: white;
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #saveButton:hover { background-color: #218838; }
+        #saveButton:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #initialMessage { text-align: center; font-size: 1.1em; color: #666; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Live Slide</h1>
+        <img id="slideDisplay" src="" alt="Live Presentation Slide" style="display: none;">
+        <p id="initialMessage">Scan the QR code to join the presentation.</p>
+        <div id="status">Connecting...</div>
+    </div>
+    <button id="saveButton" disabled>Save Slide</button>
+
+    <script>
+        const slideDisplay = document.getElementById('slideDisplay');
+        const statusDiv = document.getElementById('status');
+        const saveButton = document.getElementById('saveButton');
+        const initialMessage = document.getElementById('initialMessage');
+
+        let ws;
+        let sessionId;
+        let currentSlideImageDataURL = ''; // To store the received image data URL
+
+        function connectWebSocket() {
+            const urlParams = new URLSearchParams(window.location.search);
+            sessionId = urlParams.get('id');
+
+            if (!sessionId) {
+                statusDiv.textContent = 'Error: No session ID found in URL. Please scan the QR code again.';
+                saveButton.disabled = true;
+                initialMessage.textContent = 'Please scan the QR code to join the presentation.';
+                initialMessage.style.display = 'block';
+                return;
+            }
+
+            initialMessage.style.display = 'none'; // Hide initial message once session ID is found
+            statusDiv.textContent = `Connecting to session ${sessionId}...`;
+
+            // WebSocket connection to your server
+            ws = new WebSocket(`ws://${window.location.host}/ws/audience?id=${sessionId}`);
+
+            ws.onopen = () => {
+                statusDiv.textContent = `Connected to session ${sessionId}. Waiting for first slide...`;
+                console.log('Audience WebSocket connected.');
+                saveButton.disabled = false;
+            };
+
+            ws.onmessage = event => {
+                try {
+                    const message = JSON.parse(event.data);
+                    if (message.type === 'disconnected') {
+                        slideDisplay.style.display = 'none'; // Hide image
+                        statusDiv.textContent = 'Presentation ended.';
+                        initialMessage.textContent = message.message; // Display presenter's disconnect message
+                        initialMessage.style.display = 'block';
+                        saveButton.disabled = true;
+                        ws.close(); // Close explicitly
+                        return;
+                    }
+                } catch (e) {
+                    // Not a JSON message, assume it's image data URL
+                }
+                currentSlideImageDataURL = event.data; // Store the received image data URL
+                slideDisplay.src = currentSlideImageDataURL; // Set image source
+                slideDisplay.style.display = 'block'; // Show the image
+                statusDiv.textContent = `Connected.`; // Update status once slide arrives
+            };
+
+            ws.onclose = () => {
+                slideDisplay.style.display = 'none'; // Hide image
+                statusDiv.textContent = 'Disconnected from presentation.';
+                initialMessage.textContent = 'You have been disconnected from the presentation. Please refresh or scan a new QR code if the presentation is still active.';
+                initialMessage.style.display = 'block';
+                console.log('Audience WebSocket disconnected.');
+                saveButton.disabled = true;
+            };
+
+            ws.onerror = (error) => {
+                slideDisplay.style.display = 'none'; // Hide image
+                statusDiv.textContent = 'Connection error. Please check your internet or refresh.';
+                initialMessage.textContent = 'Connection error. Please check your internet connection or the presenter\'s status.';
+                initialMessage.style.display = 'block';
+                console.error('Audience WebSocket error:', error);
+                saveButton.disabled = true;
+            };
+        }
+
+        saveButton.onclick = () => {
+            if (currentSlideImageDataURL) {
+                const a = document.createElement('a');
+                a.href = currentSlideImageDataURL;
+                // Suggest a filename. Date.now() ensures uniqueness.
+                a.download = `slide_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                // alert('Slide saved to downloads!'); // Optional user feedback
+            } else {
+                alert('No slide to save yet!');
+            }
+        };
+
+        // Initialize when the page loads
+        connectWebSocket();
+    </script>
+</body>
+</html>
