@@ -483,7 +483,7 @@
             }
 
             // Generate QR code with the audience join URL
-            const joinUrl = `${window.location.origin}/join?id=${sessionId}`;
+            const joinUrl = `${window.location.origin}/join/${sessionId}`;
             
             new QRCode(qrCodeDiv, {
                 text: joinUrl,

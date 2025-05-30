@@ -244,7 +244,7 @@
             if (sessionId) {
                 sessionIdTopRight.textContent = "Session: " + sessionId;
                 sessionIdTopRight.style.display = "block";
-                const joinUrl = `${window.location.origin}/join?id=${sessionId}`;
+                const joinUrl = `${window.location.origin}/join/${sessionId}`;
                 joinLinkInput.value = joinUrl;
             } else {
                 sessionIdTopRight.style.display = "none";
