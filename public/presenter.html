@@ -141,9 +141,9 @@
         .link-section {
             display: flex;
             flex-direction: column;
-            align-items: center; 
-            min-width: 220px;
-            max-width: 330px;
+            align-items: center;
+            min-width: 5vw;   /* Scales with viewport width */
+            width: 100%;
             word-break: break-all;
         }
         .copy-link-label {
@@ -153,25 +153,30 @@
         }
         .copy-link-row {
             display: flex;
-            flex-direction: column;      /* Stack vertically */
-            align-items: center;         /* Center horizontally */
+            flex-direction: column;
+            align-items: center;
             gap: 10px;
             width: 100%;
+            max-width: 100%;      /* Allow to fill parent */
         }
         /* Optional: Add margin to the button for spacing */
         #copyLinkButton {
             margin-top: 6px;
         }
         #joinLinkInput {
-            font-size: 0.98em;
+            font-size: 1em;
             padding: 8px 12px;
             border: 1.5px solid #e0e7ff;
             border-radius: 7px;
             background: #f8fafc;
             color: #222;
             width: 100%;
-            max-width: 230px;
+            max-width: 100%;
+            min-width: 0;
+            font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
             outline: none;
+            box-sizing: border-box;
+            text-align: center; /* Add this line */
         }
         #copyLinkButton {
             padding: 8px 18px;
