@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audience View</title>
+    <title>PicPocket (Audience View)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -65,6 +65,80 @@
             position: relative;
             z-index: 1;
         }
+        .session-info {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 18px;
+            z-index: 1;
+        }
+        .session-id-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .session-id-label {
+            font-size: 1em;
+            color: #64748b;
+            font-weight: 500;
+        }
+        #sessionIdValue {
+            font-family: monospace;
+            font-size: 1em;
+            color: var(--primary-dark);
+            background: #e0e7ff;
+            border-radius: 6px;
+            padding: 2px 8px;
+            margin-left: 2px;
+        }
+        #copySessionIdButton {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 5px;
+            transition: background var(--transition);
+        }
+        #copySessionIdButton.copied {
+            color: var(--accent-dark);
+        }
+        .join-link-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        .join-link-label {
+            font-size: 0.97em;
+            color: #64748b;
+        }
+        #joinLinkInput {
+            font-size: 0.97em;
+            padding: 4px 10px;
+            border: 1.5px solid #e0e7ff;
+            border-radius: 6px;
+            background: #f8fafc;
+            color: #222;
+            width: 170px;
+            outline: none;
+        }
+        #copyLinkButton {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.15em;
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 5px;
+            transition: background var(--transition);
+        }
+        #copyLinkButton.copied {
+            color: var(--accent-dark);
+        }
         #slideDisplay {
             width: 100%;
             max-width: 350px;
@@ -81,6 +155,42 @@
         }
         #slideDisplay[style*="display: none"] {
             margin-bottom: 0;
+        }
+        #saveButton {
+            margin: 10px auto 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 22px;
+            font-size: 1.08em;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px 0 rgba(34,197,94,0.10);
+            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+            outline: none;
+            letter-spacing: 0.01em;
+            z-index: 1;
+        }
+        #saveButton svg {
+            width: 1.2em;
+            height: 1.2em;
+            vertical-align: middle;
+            fill: currentColor;
+        }
+        #saveButton:hover:not(:disabled) {
+            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
+            box-shadow: 0 8px 24px 0 rgba(34,197,94,0.18);
+            transform: translateY(-2px) scale(1.03);
+        }
+        #saveButton:disabled {
+            background: #d1d5db;
+            color: #a1a1aa;
+            cursor: not-allowed;
+            box-shadow: none;
         }
         #status {
             margin-top: 12px;
@@ -103,33 +213,6 @@
             margin-bottom: 0;
             z-index: 1;
         }
-        #saveButton {
-            margin-top: 32px;
-            padding: 14px 36px;
-            font-size: 1.15em;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 16px 0 rgba(34,197,94,0.10);
-            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
-            outline: none;
-            letter-spacing: 0.01em;
-            z-index: 1;
-        }
-        #saveButton:hover:not(:disabled) {
-            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
-            box-shadow: 0 8px 24px 0 rgba(34,197,94,0.18);
-            transform: translateY(-2px) scale(1.03);
-        }
-        #saveButton:disabled {
-            background: #d1d5db;
-            color: #a1a1aa;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
         @media (max-width: 540px) {
             .container {
                 padding: 20px 8vw 18px 8vw;
@@ -139,22 +222,48 @@
                 max-width: 90vw;
                 max-height: 45vw;
             }
+            .session-info {
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Live Slide</h1>
+        <div class="session-info">
+            <div class="session-id-row">
+                <span class="session-id-label">Session ID:</span>
+                <span id="sessionIdValue"></span>
+                <button id="copySessionIdButton" title="Copy Session ID">
+                    <svg width="18" height="18" viewBox="0 0 20 20"><path d="M6 2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H6zm0 2h8v10H6V4zm-2 14a2 2 0 0 1-2-2V6h2v10h10v2H4z"/></svg>
+                </button>
+            </div>
+            <div class="join-link-row">
+                <span class="join-link-label">Join link:</span>
+                <input id="joinLinkInput" type="text" readonly value="">
+                <button id="copyLinkButton" title="Copy Join Link">
+                    <svg width="18" height="18" viewBox="0 0 20 20"><path d="M6 2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H6zm0 2h8v10H6V4zm-2 14a2 2 0 0 1-2-2V6h2v10h10v2H4z"/></svg>
+                </button>
+            </div>
+        </div>
         <img id="slideDisplay" src="" alt="Live Presentation Slide" style="display: none;">
+        <button id="saveButton" disabled>
+            <svg viewBox="0 0 20 20"><path d="M13 7h-2V3h-2v4H7l3 3 3-3zm-7 6v2a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2h-2v2H8v-2H6z"/></svg>
+            Save Slide
+        </button>
         <p id="initialMessage">Scan the QR code to join the presentation.</p>
         <div id="status">Connecting...</div>
     </div>
-    <button id="saveButton" disabled>Save Slide</button>
     <script>
         const slideDisplay = document.getElementById('slideDisplay');
         const statusDiv = document.getElementById('status');
         const saveButton = document.getElementById('saveButton');
         const initialMessage = document.getElementById('initialMessage');
+        const sessionIdValue = document.getElementById('sessionIdValue');
+        const copySessionIdButton = document.getElementById('copySessionIdButton');
+        const joinLinkInput = document.getElementById('joinLinkInput');
+        const copyLinkButton = document.getElementById('copyLinkButton');
 
         let ws;
         let sessionId;
@@ -163,6 +272,16 @@
         function connectWebSocket() {
             const urlParams = new URLSearchParams(window.location.search);
             sessionId = urlParams.get('id');
+
+            // Show session ID and join link if present
+            if (sessionId) {
+                sessionIdValue.textContent = sessionId;
+                const joinUrl = `${window.location.origin}/join?id=${sessionId}`;
+                joinLinkInput.value = joinUrl;
+            } else {
+                sessionIdValue.textContent = 'N/A';
+                joinLinkInput.value = '';
+            }
 
             if (!sessionId) {
                 statusDiv.textContent = 'Error: No session ID found in URL. Please scan the QR code again.';
@@ -224,11 +343,30 @@
             };
         }
 
+        // Copy session ID
+        copySessionIdButton.addEventListener('click', () => {
+            if (sessionIdValue.textContent && sessionIdValue.textContent !== 'N/A') {
+                navigator.clipboard.writeText(sessionIdValue.textContent);
+                copySessionIdButton.classList.add('copied');
+                setTimeout(() => copySessionIdButton.classList.remove('copied'), 1000);
+            }
+        });
+
+        // Copy join link
+        copyLinkButton.addEventListener('click', () => {
+            if (joinLinkInput.value) {
+                joinLinkInput.select();
+                joinLinkInput.setSelectionRange(0, 99999); // For mobile devices
+                document.execCommand('copy');
+                copyLinkButton.classList.add('copied');
+                setTimeout(() => copyLinkButton.classList.remove('copied'), 1000);
+            }
+        });
+
         saveButton.onclick = () => {
             if (currentSlideImageDataURL) {
                 const a = document.createElement('a');
                 a.href = currentSlideImageDataURL;
-                // Suggest a filename. Date.now() ensures uniqueness.
                 a.download = `slide_${Date.now()}.png`;
                 document.body.appendChild(a);
                 a.click();

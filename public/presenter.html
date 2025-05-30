@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Presenter Dashboard</title>
+    <title>PicPocket (Presenter Dashboard)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -41,8 +41,8 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             padding: 38px 32px 32px 32px;
-            max-width: 520px;
-            width: 96vw;
+            max-width: 700px;
+            width: 98vw;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -67,53 +67,8 @@
             position: relative;
             z-index: 1;
         }
-        h2 {
-            color: var(--primary-dark);
-            font-size: 1.18rem;
-            font-weight: 600;
-            margin-top: 34px;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
-        }
-        p {
-            margin: 0 0 10px 0;
-            color: #455468;
-            font-size: 1.05em;
-            position: relative;
-            z-index: 1;
-        }
-        #qrCode {
-            margin: 20px auto 8px auto;
-            border: 1.5px solid #e0e7ff;
-            padding: 13px;
-            background: #f8fafc;
-            border-radius: 12px;
-            display: inline-block;
-            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
-            position: relative;
-            z-index: 1;
-        }
-        #joinLinkContainer {
-            margin-top: 6px;
-            margin-bottom: 8px;
-            font-size: 1em;
-            position: relative;
-            z-index: 1;
-        }
-        #joinLinkContainer a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color var(--transition);
-            word-break: break-all;
-        }
-        #joinLinkContainer a:hover {
-            color: var(--primary-dark);
-            text-decoration: underline;
-        }
         #status {
-            margin-top: 12px;
+            margin: 16px 0 12px 0;
             font-size: 1.08em;
             font-weight: 500;
             color: var(--primary-dark);
@@ -126,13 +81,115 @@
             position: relative;
             z-index: 1;
         }
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            z-index: 1;
+        }
+        #previewVideo {
+            width: 100%;
+            max-width: 540px;
+            min-height: 240px;
+            aspect-ratio: 16/9;
+            border: 2px solid #e0e7ff;
+            margin: 0 auto 24px auto;
+            background-color: #000;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
+            display: block;
+            z-index: 1;
+        }
+        .share-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            width: 100%;
+            margin-top: 0;
+            margin-bottom: 0;
+            z-index: 1;
+        }
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-width: 190px;
+        }
+        #qrCode {
+            border: 1.5px solid #e0e7ff;
+            padding: 13px;
+            background: #f8fafc;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
+            margin-bottom: 8px;
+        }
+        .or-label {
+            font-size: 1.05em;
+            color: #64748b;
+            margin: 6px 0 0 0;
+            font-weight: 500;
+        }
+        .link-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 220px;
+            max-width: 330px;
+            word-break: break-all;
+        }
+        .copy-link-label {
+            font-size: 1em;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .copy-link-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+        #joinLinkInput {
+            font-size: 0.98em;
+            padding: 8px 12px;
+            border: 1.5px solid #e0e7ff;
+            border-radius: 7px;
+            background: #f8fafc;
+            color: #222;
+            width: 100%;
+            max-width: 230px;
+            outline: none;
+        }
+        #copyLinkButton {
+            padding: 8px 18px;
+            font-size: 1em;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+            outline: none;
+            letter-spacing: 0.01em;
+            box-shadow: 0 2px 8px 0 rgba(37,99,235,0.06);
+        }
+        #copyLinkButton.copied {
+            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
+        }
         .buttons-group {
             display: flex;
             justify-content: center;
-            margin-top: 26px;
+            margin: 30px 0 0 0;
             gap: 18px;
             position: relative;
             z-index: 1;
+            width: 100%;
         }
         .buttons-group button {
             padding: 14px 32px;
@@ -195,24 +252,31 @@
             position: relative;
             z-index: 1;
         }
-        #previewVideo {
-            width: 100%;
-            max-width: 380px;
-            border: 2px solid #e0e7ff;
-            margin-top: 16px;
-            background-color: #000;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
-            position: relative;
-            z-index: 1;
-        }
-        @media (max-width: 600px) {
+        @media (max-width: 900px) {
             .container {
-                padding: 20px 6vw 18px 6vw;
                 max-width: 99vw;
+                padding: 18px 2vw 18px 2vw;
             }
             #previewVideo {
-                max-width: 92vw;
+                max-width: 97vw;
+            }
+            .share-row {
+                flex-direction: column;
+                gap: 18px;
+                align-items: center;
+            }
+            .link-section, .qr-section {
+                align-items: center;
+                width: 100%;
+                min-width: unset;
+                max-width: 99vw;
+            }
+            .copy-link-row {
+                width: 100%;
+                max-width: 99vw;
+            }
+            #joinLinkInput {
+                max-width: 99vw;
             }
         }
     </style>
@@ -220,20 +284,28 @@
 <body>
     <div class="container">
         <h1>Presenter Dashboard</h1>
-        <p>Scan this QR code with audience phones to join:</p>
-        <div id="qrCode"></div>
-        <div id="joinLinkContainer"></div>
         <div id="status">Loading...</div>
-
+        <div class="main-content">
+            <video id="previewVideo" autoplay muted></video>
+            <div class="share-row">
+                <div class="qr-section">
+                    <div id="qrCode"></div>
+                </div>
+                <div class="link-section">
+                    <div class="copy-link-label">Copy and paste this link:</div>
+                    <div class="copy-link-row">
+                        <input id="joinLinkInput" type="text" readonly value="">
+                        <button id="copyLinkButton" type="button">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="buttons-group">
             <button id="startSharingButton" disabled>Start Sharing Screen</button>
             <button id="stopSharingButton" disabled>Stop Sharing</button>
+            <button id="startNewSessionButton">Start New Session</button>
         </div>
-        <button id="startNewSessionButton">Start New Session</button>
         <p id="noPermissionMessage">Permissions denied. Please allow screen sharing.</p>
-
-        <h2>Your Shared Screen (Preview):</h2>
-        <video id="previewVideo" autoplay muted></video>
     </div>
     <script>
         const statusDiv = document.getElementById('status');
@@ -243,7 +315,8 @@
         const startNewSessionButton = document.getElementById('startNewSessionButton');
         const previewVideo = document.getElementById('previewVideo');
         const noPermissionMessage = document.getElementById('noPermissionMessage');
-        const joinLinkContainer = document.getElementById('joinLinkContainer');
+        const joinLinkInput = document.getElementById('joinLinkInput');
+        const copyLinkButton = document.getElementById('copyLinkButton');
 
         // --- Core Variables for Screen Sharing ---
         let ws;
@@ -332,8 +405,6 @@
                 startNewSessionButton.style.display = 'block'; // Show new session button on error
             }
         }
-
-        // This loop handles the actual image capture and sending
         function startSendingFramesLoop() {
             // Clear any existing interval to prevent multiple loops
             if (sendIntervalId) {
@@ -369,7 +440,6 @@
                     // Send the JPEG image data URL over the WebSocket
                     ws.send(currentImageDataURL);
                     lastAvgPixelIntensity = currentAvgPixelIntensity; // Update for next comparison
-                    // console.log(`Sent frame. Avg Intensity: ${currentAvgPixelIntensity.toFixed(2)}, Diff: ${(intensityDiff*100).toFixed(2)}%`);
                 }
             }, SEND_INTERVAL_MS);
         }
@@ -394,7 +464,6 @@
             lastAvgPixelIntensity = 0; // Reset for new session
         }
 
-
         // --- Initialization ---
         async function initializePresenter() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -418,8 +487,8 @@
                 correctLevel : QRCode.CorrectLevel.H
             });
 
-            // Display the join URL as a clickable link
-            joinLinkContainer.innerHTML = `Audience Link: <a href="${joinUrl}" target="_blank" rel="noopener noreferrer">${joinUrl}</a>`;
+            // Set the join URL in the input for copying
+            joinLinkInput.value = joinUrl;
 
             statusDiv.textContent = `Session ID: ${sessionId} | Connecting...`;
 
@@ -457,6 +526,19 @@
                 console.log('Message from server for presenter:', event.data);
             };
         }
+
+        // --- Copy to Clipboard Logic ---
+        copyLinkButton.addEventListener('click', () => {
+            joinLinkInput.select();
+            joinLinkInput.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand('copy');
+            copyLinkButton.classList.add('copied');
+            copyLinkButton.textContent = "Copied!";
+            setTimeout(() => {
+                copyLinkButton.classList.remove('copied');
+                copyLinkButton.textContent = "Copy";
+            }, 1200);
+        });
 
         // --- Event Listeners ---
         startSharingButton.onclick = startScreenSharing;
