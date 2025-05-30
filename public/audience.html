@@ -3,52 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audience View</title>
+    <title>PicPocket (Audience View)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 100vh; margin: 0; background-color: #f0f2f5; color: #333; padding-top: 20px; padding-bottom: 20px;}
-        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 95vw; width: 100%; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
-        h1 { color: #007bff; margin-bottom: 20px; font-size: 1.5em; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --accent: #22c55e;
+            --accent-dark: #15803d;
+            --bg-light: #f3f6fa;
+            --container-bg: #fff;
+            --shadow: 0 6px 32px 0 rgba(30,64,175,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.03);
+            --radius: 18px;
+            --transition: 0.25s cubic-bezier(.4,0,.2,1);
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0f2f5 100%);
+            font-family: 'Inter', Arial, sans-serif;
+            color: #222;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .session-id-topright {
+            position: fixed;
+            top: 24px;
+            right: 36px;
+            background: #e0e7ff;
+            color: var(--primary-dark);
+            border-radius: 8px;
+            padding: 6px 16px;
+            font-size: 1em;
+            font-family: monospace;
+            font-weight: 600;
+            box-shadow: 0 1px 6px 0 rgba(30,64,175,0.08);
+            z-index: 10;
+            letter-spacing: 0.02em;
+        }
+        .container {
+            background: var(--container-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 36px 28px 28px 28px;
+            max-width: 540px;
+            width: 98vw;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: box-shadow var(--transition);
+            position: relative;
+        }
+        .container::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: linear-gradient(120deg, #c7d2fe 0%, #f0f2f5 100%);
+            opacity: 0.13;
+            z-index: 0;
+        }
+        h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            letter-spacing: -1px;
+            position: relative;
+            z-index: 1;
+        }
+        .join-link-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            justify-content: flex-start;
+        }
+        .join-link-label {
+            font-size: 1em;
+            color: #64748b;
+        }
+        #joinLinkInput {
+            font-size: 1em;
+            padding: 8px 12px;
+            border: 1.5px solid #e0e7ff;
+            border-radius: 7px;
+            background: #f8fafc;
+            color: #222;
+            width: 220px;
+            outline: none;
+        }
+        #copyLinkButton {
+            padding: 10px 22px;
+            font-size: 1.08em;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px 0 rgba(34,197,94,0.10);
+            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+            outline: none;
+            letter-spacing: 0.01em;
+            z-index: 1;
+        }
+        #copyLinkButton.copied {
+            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
+        }
         #slideDisplay {
             width: 100%;
-            height: auto; /* Allow height to adjust to image aspect ratio */
-            max-width: 100%; /* Ensure it fits within container */
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            display: block; /* Remove extra space below image */
-            margin: 0 auto;
-            object-fit: contain; /* Scale image to fit element */
+            max-width: 480px;
+            max-height: 480px;
+            background: #eef2ff;
+            border: 2px solid #e0e7ff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
+            display: block;
+            margin: 0 auto 12px auto;
+            object-fit: contain;
+            transition: box-shadow var(--transition), border-color var(--transition);
+            z-index: 1;
         }
-        #status { margin-top: 15px; font-weight: bold; color: #555; }
+        #slideDisplay[style*="display: none"] {
+            margin-bottom: 0;
+        }
         #saveButton {
-            margin-top: 20px;
-            padding: 12px 25px;
-            font-size: 1.1em;
-            color: white;
-            background-color: #28a745;
+            margin: 14px auto 0 auto;
+            display: block;
+            padding: 10px 22px;
+            font-size: 1.08em;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 16px 0 rgba(34,197,94,0.10);
+            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+            outline: none;
+            letter-spacing: 0.01em;
+            z-index: 1;
         }
-        #saveButton:hover { background-color: #218838; }
-        #saveButton:disabled { background-color: #cccccc; cursor: not-allowed; }
-        #initialMessage { text-align: center; font-size: 1.1em; color: #666; margin-top: 20px; }
+        #saveButton:hover:not(:disabled),
+        #copyLinkButton:hover:not(:disabled) {
+            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
+            box-shadow: 0 8px 24px 0 rgba(34,197,94,0.18);
+            transform: translateY(-2px) scale(1.03);
+        }
+        #saveButton:disabled {
+            background: #d1d5db;
+            color: #a1a1aa;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        #status {
+            margin-top: 12px;
+            font-size: 1.05em;
+            font-weight: 500;
+            color: var(--primary-dark);
+            letter-spacing: 0.01em;
+            background: #e0e7ff;
+            border-radius: 8px;
+            padding: 8px 16px;
+            display: inline-block;
+            box-shadow: 0 1px 4px 0 rgba(30,64,175,0.07);
+            z-index: 1;
+        }
+        #initialMessage {
+            text-align: center;
+            font-size: 1.08em;
+            color: #64748b;
+            margin-top: 18px;
+            margin-bottom: 0;
+            z-index: 1;
+        }
+        @media (max-width: 700px) {
+            .container {
+                padding: 16px 2vw 16px 2vw;
+                max-width: 99vw;
+            }
+            #slideDisplay {
+                max-width: 96vw;
+                max-height: 55vw;
+            }
+            .session-id-topright {
+                right: 10px;
+                top: 10px;
+                font-size: 0.98em;
+                padding: 5px 10px;
+            }
+            #joinLinkInput {
+                width: 115px;
+                font-size: 0.95em;
+            }
+        }
     </style>
 </head>
 <body>
+    <div id="sessionIdTopRight" class="session-id-topright" style="display:none;"></div>
     <div class="container">
         <h1>Live Slide</h1>
+        <div class="join-link-row">
+            <span class="join-link-label">Join link:</span>
+            <input id="joinLinkInput" type="text" readonly value="">
+            <button id="copyLinkButton" type="button">Copy</button>
+        </div>
         <img id="slideDisplay" src="" alt="Live Presentation Slide" style="display: none;">
+        <button id="saveButton" disabled>Save Slide</button>
         <p id="initialMessage">Scan the QR code to join the presentation.</p>
         <div id="status">Connecting...</div>
     </div>
-    <button id="saveButton" disabled>Save Slide</button>
-
     <script>
         const slideDisplay = document.getElementById('slideDisplay');
         const statusDiv = document.getElementById('status');
         const saveButton = document.getElementById('saveButton');
         const initialMessage = document.getElementById('initialMessage');
+        const joinLinkInput = document.getElementById('joinLinkInput');
+        const copyLinkButton = document.getElementById('copyLinkButton');
+        const sessionIdTopRight = document.getElementById('sessionIdTopRight');
 
         let ws;
         let sessionId;
@@ -57,6 +239,17 @@
         function connectWebSocket() {
             const urlParams = new URLSearchParams(window.location.search);
             sessionId = urlParams.get('id');
+
+            // Show session ID at top right and join link if present
+            if (sessionId) {
+                sessionIdTopRight.textContent = "Session: " + sessionId;
+                sessionIdTopRight.style.display = "block";
+                const joinUrl = `${window.location.origin}/join/${sessionId}`;
+                joinLinkInput.value = joinUrl;
+            } else {
+                sessionIdTopRight.style.display = "none";
+                joinLinkInput.value = '';
+            }
 
             if (!sessionId) {
                 statusDiv.textContent = 'Error: No session ID found in URL. Please scan the QR code again.';
@@ -118,16 +311,29 @@
             };
         }
 
+        // Copy join link
+        copyLinkButton.addEventListener('click', () => {
+            if (joinLinkInput.value) {
+                joinLinkInput.select();
+                joinLinkInput.setSelectionRange(0, 99999); // For mobile devices
+                document.execCommand('copy');
+                copyLinkButton.classList.add('copied');
+                copyLinkButton.textContent = "Copied!";
+                setTimeout(() => {
+                    copyLinkButton.classList.remove('copied');
+                    copyLinkButton.textContent = "Copy";
+                }, 1200);
+            }
+        });
+
         saveButton.onclick = () => {
             if (currentSlideImageDataURL) {
                 const a = document.createElement('a');
                 a.href = currentSlideImageDataURL;
-                // Suggest a filename. Date.now() ensures uniqueness.
                 a.download = `slide_${Date.now()}.png`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                // alert('Slide saved to downloads!'); // Optional user feedback
             } else {
                 alert('No slide to save yet!');
             }

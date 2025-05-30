@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid'); // For unique session IDs
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+const { uniqueNamesGenerator, adjectives, animals, colors } = require('unique-names-generator'); 
 
 // Store active sessions: sessionId -> { presenterWs: WebSocket, audienceWs: Set<WebSocket> }
 const activeSessions = new Map();
@@ -17,7 +18,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // --- HTTP Endpoints ---
 // Presenter endpoint: Generates a new session and redirects to presenter.html with ID
 app.get('/presenter', (req, res) => {
-    const sessionId = uuidv4(); // Generate a unique session ID
+    // Replace uuidv4() with uniqueNamesGenerator
+    const sessionId = uniqueNamesGenerator({
+        dictionaries: [adjectives, animals, colors],
+        separator: '-',
+        style: 'lowerCase'
+    });
     // Initialize session with null presenterWs and empty audience set
     activeSessions.set(sessionId, { presenterWs: null, audienceWs: new Set() });
     console.log(`New session created: ${sessionId}`);
@@ -26,12 +32,11 @@ app.get('/presenter', (req, res) => {
 });
 
 // Audience join endpoint: Serves the audience HTML
-app.get('/join', (req, res) => {
-    const sessionId = req.query.id;
+app.get('/join/:sessionId', (req, res) => {
+    const sessionId = req.params.sessionId;
     if (!sessionId || !activeSessions.has(sessionId)) {
         return res.status(404).send('Presentation session not found or invalid ID.');
     }
-    // Serve the audience HTML. WebSocket will handle connection logic
     res.sendFile(path.join(__dirname, 'public', 'audience.html'));
 });
 
