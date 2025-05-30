@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #2563eb;
@@ -25,6 +26,9 @@
             height: 100%;
             margin: 0;
             padding: 0;
+        }
+        .center-text {
+            text-align: center;
         }
         body {
             min-height: 100vh;
@@ -239,9 +243,7 @@
             font-size: 1.08em;
             font-weight: 600;
             border-radius: 8px;
-            margin-top: 22px;
-            padding: 12px 30px;
-            display: none;
+            display: block;
             transition: background var(--transition), transform var(--transition);
         }
         #startNewSessionButton:hover {
@@ -288,7 +290,7 @@
 <body>
     <div class="container">
         <h1>Presenter Dashboard</h1>
-        <div id="status">Loading...</div>
+        <div id="status" class="center-text">Loading...</div>
         <div class="main-content">
             <video id="previewVideo" autoplay muted></video>
             <div class="share-row">
@@ -307,8 +309,9 @@
         <div class="buttons-group">
             <button id="startSharingButton" disabled>Start Sharing Screen</button>
             <button id="stopSharingButton" disabled>Stop Sharing</button>
-            <button id="startNewSessionButton">Start New Session</button>
-        </div>
+            <button id="startNewSessionButton">
+            <i class="fas fa-rotate-right"></i> Start New Session
+            </button>        </div>
         <p id="noPermissionMessage">Permissions denied. Please allow screen sharing.</p>
     </div>
     <script>
@@ -500,8 +503,9 @@
             ws = new WebSocket(`ws://${window.location.host}/ws/presenter?id=${sessionId}`);
 
             ws.onopen = () => {
-                statusDiv.textContent = `Session ID: ${sessionId} | Connected. Click 'Start Sharing'.`;
+                statusDiv.innerHTML = `Ready to Share. Click 'Start Sharing'.`;
                 console.log('Presenter WebSocket connected.');
+                console.log('Session ID:', sessionId); // Log session ID to console only
                 startSharingButton.disabled = false;
                 stopSharingButton.disabled = true;
                 startNewSessionButton.style.display = 'none'; // Ensure hidden on successful connect
