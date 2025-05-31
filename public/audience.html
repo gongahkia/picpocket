@@ -63,16 +63,25 @@
             background: linear-gradient(90deg, #22c55e, #2563eb);
             color: #fff;
             border: none;
-            border-radius: 50%;
-            width: 56px;
+            border-radius: 28px;
+            width: auto;
             height: 56px;
             box-shadow: 0 4px 16px 0 rgba(34,197,94,0.18);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2em;
+            font-size: 1.2em;
             cursor: pointer;
             transition: background 0.2s, transform 0.2s;
+            padding: 0 22px;
+            gap: 12px;
+        }
+        .save-btn .save-label {
+            font-size: 1.1em;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            margin-left: 6px;
+            user-select: none;
         }
         .save-btn:active {
             transform: scale(0.95);
@@ -127,8 +136,9 @@
         <img id="slideDisplay" alt="Live Presentation Slide">
         <div id="notConnectedMsg">Not connected yet.<br>Waiting for presenter...</div>
     </div>
-    <button id="saveButton" class="save-btn" title="Save Slide" style="display:none;">
+    <button id="saveButton" class="save-btn" title="Save to device" style="display:none;">
         <i class="fa-solid fa-download"></i>
+        <span class="save-label">Save</span>
     </button>
     <div class="share-link-footer">
         <div style="display: flex; flex-direction: column; align-items: center;">
@@ -156,7 +166,7 @@
             const pathParts = window.location.pathname.split('/');
             return pathParts[2] || '';
         }
-
+        
         function connectWebSocket() {
             sessionId = getSessionId();
             if (!sessionId) {
@@ -174,23 +184,49 @@
                 notConnectedMsg.textContent = 'Connected. Waiting for presenter...';
             };
 
+            let awaitingPresenter = false;
+
             ws.onmessage = event => {
+                console.log("Received message:", event.data);
                 try {
                     const message = JSON.parse(event.data);
+                    console.log("Parsed as JSON:", message);
                     if (message.type === 'disconnected') {
+                        console.log("Presenter disconnected.");
                         slideDisplay.style.display = 'none';
                         saveButton.style.display = 'none';
                         notConnectedMsg.textContent = 'Presentation ended.';
+                        notConnectedMsg.style.display = 'block';
+                        awaitingPresenter = false;
                         ws.close();
                         return;
                     }
-                } catch (e) {}
-                currentSlideImageDataURL = event.data;
-                slideDisplay.src = currentSlideImageDataURL;
-                slideDisplay.style.display = 'block';
-                saveButton.style.display = 'flex';
-                notConnectedMsg.style.display = 'none';
-                resetZoom();
+                    if (message.type === 'awaiting') {
+                        console.log("Presenter stopped sharing, awaiting...");
+                        slideDisplay.style.display = 'none';
+                        slideDisplay.src = ''; // Clear the image source
+                        saveButton.style.display = 'none';
+                        notConnectedMsg.textContent = 'Awaiting presenter to share...';
+                        notConnectedMsg.style.display = 'block';
+                        awaitingPresenter = true;
+                        return;
+                    }
+                } catch (e) {
+                    console.log("Not JSON, assuming image data.");
+                }
+                // Only show image if not awaiting
+                if (event.data.startsWith('data:image/')) {
+                    console.log("Displaying new slide image.");
+                    awaitingPresenter = false;
+                    currentSlideImageDataURL = event.data;
+                    slideDisplay.src = currentSlideImageDataURL;
+                    slideDisplay.style.display = 'block';
+                    saveButton.style.display = 'flex';
+                    notConnectedMsg.style.display = 'none';
+                    resetZoom();
+                } else if (awaitingPresenter && event.data.startsWith('data:image/')) {
+                    console.log("Ignored image because awaiting presenter.");
+                }
             };
 
             ws.onclose = () => {

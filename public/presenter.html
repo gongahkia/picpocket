@@ -389,27 +389,33 @@
             noPermissionMessage.style.display = 'none';
             try {
                 mediaStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "always" }, // Show cursor in shared screen
-                    audio: false // We don't need audio for this app
+                    video: { cursor: "always" },
+                    audio: false
                 });
 
-                previewVideo.srcObject = mediaStream; // Show preview to presenter
-                
-                // Wait for video metadata to load before setting canvas dimensions
+                previewVideo.srcObject = mediaStream;
+
+                // Wait for video metadata to load
                 await new Promise(resolve => previewVideo.onloadedmetadata = resolve);
 
-                // Set capture canvas dimensions to match video stream's actual resolution
+                // Wait for the first video frame to be painted
+                await new Promise(resolve => {
+                    if (previewVideo.readyState >= 2) {
+                        resolve();
+                    } else {
+                        previewVideo.onplaying = resolve;
+                    }
+                });
+
                 captureCanvas.width = previewVideo.videoWidth;
                 captureCanvas.height = previewVideo.videoHeight;
 
-                // Start the loop to send frames
                 startSendingFramesLoop();
                 statusDiv.textContent = `Session ID: ${sessionId} | Sharing screen...`;
                 startSharingButton.disabled = true;
                 stopSharingButton.disabled = false;
-                startNewSessionButton.style.display = 'none'; // Hide new session button when sharing
+                startNewSessionButton.style.display = 'none';
 
-                // Listen for track ending (e.g., user stops sharing via browser's native share UI)
                 mediaStream.getTracks().forEach(track => {
                     track.onended = () => {
                         console.log('Screen sharing ended by user via browser UI.');
@@ -489,7 +495,13 @@
 
         function startSendingFramesLoop() {
             setSendFps(LOW_FPS);
-            sendFrame(); // <-- Add this line
+            
+            // Wait for two animation frames to ensure the video is painted
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    sendFrame();
+                });
+            });
         }
 
         function stopPresenting() {
@@ -502,7 +514,11 @@
                 clearInterval(sendIntervalId);
                 sendIntervalId = null;
             }
-            // Do NOT close the WebSocket here!
+            
+            // Notify audience to show "awaiting" screen
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "awaiting" }));
+            }
             statusDiv.textContent = 'Screen sharing stopped. You may select a new screen to share.';
             startSharingButton.disabled = false; // Allow starting sharing again
             stopSharingButton.disabled = true;
