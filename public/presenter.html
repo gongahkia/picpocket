@@ -298,6 +298,7 @@
         <div id="status" class="center-text">Loading...</div>
         <div class="main-content">
             <video id="previewVideo" autoplay muted></video>
+            <div id="fpsCounter" style="position:absolute;top:12px;right:18px;background:rgba(0,0,0,0.55);color:#fff;padding:4px 12px;border-radius:8px;font-size:1em;z-index:10;pointer-events:none;"></div>
             <div class="share-row">
                 <div class="qr-section">
                     <div id="qrCode"></div>
@@ -339,6 +340,17 @@
         const captureCanvas = document.createElement('canvas');
         const ctx = captureCanvas.getContext('2d');
 
+        // define fps
+        const LOW_FPS = 1;
+        const HIGH_FPS = 10;
+        const BURST_DURATION_MS = 2000;
+        let currentFps = LOW_FPS;
+        let burstTimeout = null;
+
+        let framesSent = 0;
+        let lastFpsUpdate = Date.now();
+        const fpsCounterDiv = document.getElementById('fpsCounter');
+
         // Small canvas for efficient change detection (average pixel intensity)
         const COMPARE_CANVAS_SIZE = 16; // e.g., 16x16 pixels
         const compareCanvas = document.createElement('canvas');
@@ -347,12 +359,12 @@
         compareCanvas.height = COMPARE_CANVAS_SIZE;
 
         // --- Configuration for Sending & Quality ---
-        const JPEG_QUALITY = 0.7; // JPEG quality (0.0 to 1.0). 0.7-0.8 is usually a good balance.
-        const SEND_INTERVAL_MS = 100; // Send a frame every 100ms (aim for ~10 FPS). Adjust as needed.
+        const JPEG_QUALITY = 0.6; // JPEG quality (0.0 to 1.0). 0.7-0.8 is usually a good balance.
+        const SEND_INTERVAL_MS = 50; // Send a frame every 100ms (aim for ~10 FPS). Adjust as needed.
 
         // --- Change Detection Variables ---
         let lastAvgPixelIntensity = 0;
-        const PIXEL_CHANGE_THRESHOLD_PERCENT = 0.05; // 5% change in average pixel intensity (0.0 to 1.0 range)
+        const PIXEL_CHANGE_THRESHOLD_PERCENT = 0.01; // 5% change in average pixel intensity (0.0 to 1.0 range)
         let sendIntervalId = null; // To hold the setInterval ID for sending frames
 
         // --- Helper Functions ---
@@ -392,7 +404,6 @@
 
                 // Start the loop to send frames
                 startSendingFramesLoop();
-
                 statusDiv.textContent = `Session ID: ${sessionId} | Sharing screen...`;
                 startSharingButton.disabled = true;
                 stopSharingButton.disabled = false;
@@ -417,43 +428,60 @@
                 startNewSessionButton.style.display = 'block'; // Show new session button on error
             }
         }
-        function startSendingFramesLoop() {
-            // Clear any existing interval to prevent multiple loops
-            if (sendIntervalId) {
-                clearInterval(sendIntervalId);
+        function setSendFps(fps) {
+            if (currentFps === fps) return;
+            currentFps = fps;
+            if (sendIntervalId) clearInterval(sendIntervalId);
+            sendIntervalId = setInterval(sendFrame, 1000 / currentFps);
+        }
+
+        let firstFrameSent = false;
+
+        function sendFrame() {
+            console.log("sendFrame called");
+            if (!mediaStream || mediaStream.ended || !ws || ws.readyState !== WebSocket.OPEN) {
+                if (sendIntervalId) clearInterval(sendIntervalId);
+                sendIntervalId = null;
+                return;
             }
 
-            // Set up a new interval to send frames at a controlled rate
-            sendIntervalId = setInterval(() => {
-                // Ensure media stream and WebSocket are active before processing
-                if (!mediaStream || mediaStream.ended || !ws || ws.readyState !== WebSocket.OPEN) {
-                    console.log("Stopping frame sending loop due to stream or WebSocket being closed.");
-                    clearInterval(sendIntervalId); // Stop the interval
-                    sendIntervalId = null;
-                    return;
-                }
+            ctx.drawImage(previewVideo, 0, 0, captureCanvas.width, captureCanvas.height);
+            const currentAvgPixelIntensity = getAveragePixelIntensity(captureCanvas);
+            const intensityDiff = Math.abs(currentAvgPixelIntensity - lastAvgPixelIntensity) / 255;
 
-                // Draw the current frame from the video stream onto the main capture canvas
-                ctx.drawImage(previewVideo, 0, 0, captureCanvas.width, captureCanvas.height);
+            console.log("intensityDiff:", intensityDiff, "lastAvgPixelIntensity:", lastAvgPixelIntensity);
 
-                // Calculate the average pixel intensity of the current frame (using the small compareCanvas)
-                const currentAvgPixelIntensity = getAveragePixelIntensity(captureCanvas);
+            if (intensityDiff > PIXEL_CHANGE_THRESHOLD_PERCENT || !firstFrameSent) {
+                const currentImageDataURL = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
+                console.log("Sending image to server", currentImageDataURL.slice(0, 30));
+                ws.send(currentImageDataURL);
+                lastAvgPixelIntensity = currentAvgPixelIntensity;
+                firstFrameSent = true;
 
-                // Calculate the percentage difference from the last sent average intensity
-                // Normalize to 0-1 range (max intensity is 255)
-                const intensityDiff = Math.abs(currentAvgPixelIntensity - lastAvgPixelIntensity) / 255;
+                // Switch to high FPS on change
+                if (currentFps !== HIGH_FPS) setSendFps(HIGH_FPS);
 
-                // Only send a new frame if there's a significant visual change OR
-                // if it's the very first frame to establish the initial display.
-                if (intensityDiff > PIXEL_CHANGE_THRESHOLD_PERCENT || lastAvgPixelIntensity === 0) {
-                    // Convert the full-resolution canvas content to a JPEG data URL
-                    const currentImageDataURL = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
-                    
-                    // Send the JPEG image data URL over the WebSocket
-                    ws.send(currentImageDataURL);
-                    lastAvgPixelIntensity = currentAvgPixelIntensity; // Update for next comparison
-                }
-            }, SEND_INTERVAL_MS);
+                // Reset burst timer
+                if (burstTimeout) clearTimeout(burstTimeout);
+                burstTimeout = setTimeout(() => setSendFps(LOW_FPS), BURST_DURATION_MS);
+            } else if (currentFps === LOW_FPS) {
+                // Still send at low FPS to keep audience in sync
+                const currentImageDataURL = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
+                console.log("Sending low-FPS image", currentImageDataURL.slice(0, 30));
+                ws.send(currentImageDataURL);
+            }
+            framesSent++;
+            const now = Date.now();
+            if (now - lastFpsUpdate >= 1000) {
+                fpsCounterDiv.textContent = `FPS: ${framesSent}`;
+                framesSent = 0;
+                lastFpsUpdate = now;
+            }
+        }
+
+        function startSendingFramesLoop() {
+            setSendFps(LOW_FPS);
+            sendFrame(); // <-- Add this line
         }
 
         function stopPresenting() {
