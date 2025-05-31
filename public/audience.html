@@ -198,6 +198,12 @@
                 saveButton.style.display = 'none';
                 notConnectedMsg.textContent = 'Disconnected. You may close this tab.';
                 notConnectedMsg.style.display = 'block';
+                sessionIdDisplay.textContent = '';
+                copyLinkButton.disabled = true;
+                copyLinkButton.style.background = '#6b7280'; // grey out
+                copyLinkButton.style.cursor = 'not-allowed'; // show not-allowed cursor
+                copyLinkButton.innerHTML = '<i class="fa-solid fa-link"></i> Share Link';
+                copyLinkButton.removeAttribute('data-link');    
             };
 
             ws.onerror = (error) => {
@@ -205,6 +211,12 @@
                 saveButton.style.display = 'none';
                 notConnectedMsg.textContent = 'Connection error. Please refresh.';
                 notConnectedMsg.style.display = 'block';
+                sessionIdDisplay.textContent = '';
+                copyLinkButton.disabled = true;
+                copyLinkButton.style.background = '#6b7280';
+                copyLinkButton.style.cursor = 'not-allowed';
+                copyLinkButton.innerHTML = '<i class="fa-solid fa-link"></i> Share Link';
+                copyLinkButton.removeAttribute('data-link');
             };
         }
 
