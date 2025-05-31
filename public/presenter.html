@@ -458,22 +458,20 @@
 
         function stopPresenting() {
             if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop()); // Stop all media tracks
+                mediaStream.getTracks().forEach(track => track.stop());
                 mediaStream = null;
-                previewVideo.srcObject = null; // Clear video preview
+                previewVideo.srcObject = null;
             }
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.close(); // Close WebSocket connection (triggers server-side cleanup)
-            }
-            if (sendIntervalId) { // Clear the sending interval
+            if (sendIntervalId) {
                 clearInterval(sendIntervalId);
                 sendIntervalId = null;
             }
-            statusDiv.textContent = 'Session ended. Click "Start New Session" or refresh.';
-            startSharingButton.disabled = true; // Disable start sharing
-            stopSharingButton.disabled = true; // Disable stop sharing
-            startNewSessionButton.style.display = 'block'; // Show new session button
-            lastAvgPixelIntensity = 0; // Reset for new session
+            // Do NOT close the WebSocket here!
+            statusDiv.textContent = 'Screen sharing stopped. You may select a new screen to share.';
+            startSharingButton.disabled = false; // Allow starting sharing again
+            stopSharingButton.disabled = true;
+            startNewSessionButton.style.display = 'block'; // Optionally show new session button
+            lastAvgPixelIntensity = 0;
         }
 
         // --- Initialization ---
