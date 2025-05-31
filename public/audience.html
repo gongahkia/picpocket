@@ -237,8 +237,9 @@
         let currentSlideImageDataURL = ''; // To store the received image data URL
 
         function connectWebSocket() {
-            const urlParams = new URLSearchParams(window.location.search);
-            sessionId = urlParams.get('id');
+    // Extract sessionId from the URL path: /join/:sessionId
+            const pathParts = window.location.pathname.split('/');
+            sessionId = pathParts[2] || ''; // pathParts[0] is '', [1] is 'join', [2] is sessionId
 
             // Show session ID at top right and join link if present
             if (sessionId) {
