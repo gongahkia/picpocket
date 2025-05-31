@@ -25,7 +25,7 @@ app.get('/presenter', (req, res) => {
         style: 'lowerCase'
     });
     // Initialize session with null presenterWs and empty audience set
-    activeSessions.set(sessionId, { presenterWs: null, audienceWs: new Set() });
+    activeSessions.set(sessionId, { presenterWs: null, audienceWs: new Set(), latestImage: null });
     console.log(`New session created: ${sessionId}`);
     // Redirect to the actual presenter HTML file with the session ID in the URL
     res.redirect(`/presenter.html?id=${sessionId}`);
@@ -72,6 +72,13 @@ wss.on('connection', (ws, req) => {
     } else if (role === 'audience') {
         session.audienceWs.add(ws);
         console.log(`[WS] Audience connected to session: ${sessionId}. Total audience: ${session.audienceWs.size}`);
+        if (session.latestImage) {
+            try {
+                ws.send(session.latestImage);
+            } catch (e) {
+                console.error(`[WS] Failed to send latest image to new audience:`, e);
+            }
+        }
     } else {
         console.log(`[WS] Unknown role: ${role}. Closing connection.`);
         ws.close();
@@ -86,6 +93,7 @@ wss.on('connection', (ws, req) => {
         const messageString = message.toString('utf8');
 
         // console.log(`[WS] Presenter for ${sessionId} sent: ${messageString.substring(0, 50)}...`); // Uncomment for verbose logging
+        session.latestImage = messageString;
 
         // Broadcast the string message to all audience members in this session
         session.audienceWs.forEach(audienceWs => {
