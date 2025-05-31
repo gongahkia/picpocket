@@ -359,7 +359,7 @@
         compareCanvas.height = COMPARE_CANVAS_SIZE;
 
         // --- Configuration for Sending & Quality ---
-        const JPEG_QUALITY = 0.6; // JPEG quality (0.0 to 1.0). 0.7-0.8 is usually a good balance.
+        const QUALITY = 0.7; // JPEG quality (0.0 to 1.0). 0.7-0.8 is usually a good balance.
         const SEND_INTERVAL_MS = 50; // Send a frame every 100ms (aim for ~10 FPS). Adjust as needed.
 
         // --- Change Detection Variables ---
@@ -451,8 +451,17 @@
 
             console.log("intensityDiff:", intensityDiff, "lastAvgPixelIntensity:", lastAvgPixelIntensity);
 
+            // --- WebP or JPEG encoding ---
+            let currentImageDataURL;
+            if (captureCanvas.toDataURL('image/webp').indexOf('data:image/webp') === 0) {
+                // Browser supports WebP
+                currentImageDataURL = captureCanvas.toDataURL('image/webp', QUALITY); // 0.5 = quality
+            } else {
+                // Fallback to JPEG
+                currentImageDataURL = captureCanvas.toDataURL('image/jpeg', QUALITY);
+            }
+
             if (intensityDiff > PIXEL_CHANGE_THRESHOLD_PERCENT || !firstFrameSent) {
-                const currentImageDataURL = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
                 console.log("Sending image to server", currentImageDataURL.slice(0, 30));
                 ws.send(currentImageDataURL);
                 lastAvgPixelIntensity = currentAvgPixelIntensity;
@@ -466,7 +475,6 @@
                 burstTimeout = setTimeout(() => setSendFps(LOW_FPS), BURST_DURATION_MS);
             } else if (currentFps === LOW_FPS) {
                 // Still send at low FPS to keep audience in sync
-                const currentImageDataURL = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
                 console.log("Sending low-FPS image", currentImageDataURL.slice(0, 30));
                 ws.send(currentImageDataURL);
             }
