@@ -16,6 +16,10 @@ From venues with tiny screens to sitting too far back at church, PicPocket makes
 
 ...
 
+## Nerd details
+
+...
+
 ## Contributors
 
 <table>
