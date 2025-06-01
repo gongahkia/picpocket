@@ -1,14 +1,16 @@
 # ATTENZIONE PicPocket!!!
 
-Viewing irl presentations shouldn't be a hassle. From venues with tiny screens, to sitting too far back at church, picpocket is here to help you see clearer!
+Viewing [IRL](https://dictionary.cambridge.org/dictionary/english/irl) presentations shouldn't be a hassle.  
+
+From venues with tiny screens to sitting too far back at church, PicPocket makes things clearer *(for good)*.
 
 <div align="center">
   <img src="./asset/see.jpeg" width="30%">
 </div>
 
-## Do list
+## Usage
 
-* 
+...
 
 ## Architecture 
 
