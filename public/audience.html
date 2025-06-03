@@ -24,7 +24,7 @@
         }
         .viewer-container {
             width: 100vw;
-            height: 100vh;
+            height: calc(100vh - 100px); /* Subtract footer height */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -34,9 +34,9 @@
         }
         #slideDisplay {
             max-width: 100vw;
-            max-height: 100vh;
+            max-height: calc(100vh - 100px); /* Subtract footer height */
             width: 100vw;
-            height: 100vh;
+            height: calc(100vh - 100px);     /* Subtract footer height */
             object-fit: contain;
             background: #222;
             touch-action: pinch-zoom;
@@ -58,14 +58,15 @@
         .save-btn {
             position: fixed;
             right: 18px;
-            bottom: 70px;
+            bottom: 110px;
             z-index: 10;
             background: linear-gradient(90deg, #22c55e, #2563eb);
             color: #fff;
             border: none;
-            border-radius: 50%;
-            width: 56px;
+            border-radius: 28px;      /* pill shape */
+            min-width: 56px;
             height: 56px;
+            padding: 0 18px;          /* horizontal padding for pill */
             box-shadow: 0 4px 16px 0 rgba(34,197,94,0.18);
             display: flex;
             align-items: center;
@@ -73,8 +74,7 @@
             font-size: 1.5em;
             cursor: pointer;
             transition: background 0.2s, transform 0.2s;
-            padding: 0;
-            gap: 0;
+            gap: 8px;                /* space between icon and text */
         }
 
         .save-btn .save-label {
@@ -97,8 +97,8 @@
             justify-content: center;
             align-items: center;
             background: rgba(17,24,39,0.96);
-            padding: 10px 0 8px 0;
-            z-index: 20;
+            padding: 0px 0 20px 0;
+            z-index: 10;
         }
         .share-link-btn {
             background: #2563eb;
@@ -258,15 +258,26 @@
             };
         }
 
-        // Save slide
-        saveButton.onclick = () => {
+        saveButton.onclick = async () => {
             if (currentSlideImageDataURL) {
-                const a = document.createElement('a');
-                a.href = currentSlideImageDataURL;
-                a.download = `slide_${Date.now()}.png`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                const response = await fetch('/api/save-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageData: currentSlideImageDataURL })
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `picpocket-${Date.now()}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else {
+                    alert('Failed to save image.');
+                }
             } else {
                 alert('No slide to save yet!');
             }

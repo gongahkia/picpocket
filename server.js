@@ -15,6 +15,30 @@ const activeSessions = new Map();
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+const bodyParser = require('body-parser');
+app.use(bodyParser.json({ limit: '10mb' }));
+
+const sharp = require('sharp');
+
+app.post('/api/save-image', async (req, res) => {
+    const { imageData } = req.body;
+    if (!imageData) return res.status(400).send('Missing image data');
+    const matches = imageData.match(/^data:image\/png;base64,(.+)$/);
+    if (!matches) return res.status(400).send('Invalid image data');
+    const buffer = Buffer.from(matches[1], 'base64');
+    // Compress PNG with sharp
+    try {
+        const compressed = await sharp(buffer).png({ compressionLevel: 9 }).toBuffer();
+        const filename = `picpocket-${Date.now()}.png`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', 'image/png');
+        res.send(compressed);
+    } catch (err) {
+        res.status(500).send('Image compression failed');
+    }
+});
+
 // --- HTTP Endpoints ---
 // Presenter endpoint: Generates a new session and redirects to presenter.html with ID
 app.get('/presenter', (req, res) => {
