@@ -257,15 +257,37 @@
                 copyLinkButton.removeAttribute('data-link');
             };
         }
-
         saveButton.onclick = async () => {
-            if (currentSlideImageDataURL) {
+            if (!currentSlideImageDataURL) {
+                console.log('No slide to save yet!');
+                alert('No slide to save yet!');
+                return;
+            }
+
+            let didTimeout = false;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => {
+                didTimeout = true;
+                controller.abort();
+                console.log('Save image request timed out.');
+            }, 2000); // 2 seconds timeout
+
+            try {
+                console.log('Sending image to /api/save-image...');
                 const response = await fetch('/api/save-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imageData: currentSlideImageDataURL })
+                    body: JSON.stringify({ imageData: currentSlideImageDataURL }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
+                if (didTimeout) {
+                    console.log('Timeout already handled.');
+                    return; // Already handled by fallback
+                }
+
                 if (response.ok) {
+                    console.log('Server responded OK, downloading processed image...');
                     const blob = await response.blob();
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -276,10 +298,19 @@
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                 } else {
-                    alert('Failed to save image.');
+                    console.log('Server error when saving image.');
+                    throw new Error('Server error');
                 }
-            } else {
-                alert('No slide to save yet!');
+            } catch (err) {
+                clearTimeout(timeout);
+                console.log('Falling back to saving original image.', err);
+                // Fallback: save the original image directly
+                const a = document.createElement('a');
+                a.href = currentSlideImageDataURL;
+                a.download = `picpocket-${Date.now()}-raw.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             }
         };
 
