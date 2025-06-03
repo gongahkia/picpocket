@@ -6,326 +6,257 @@
     <title>PicPocket (Audience View)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --accent: #22c55e;
-            --accent-dark: #15803d;
-            --bg-light: #f3f6fa;
-            --container-bg: #fff;
-            --shadow: 0 6px 32px 0 rgba(30,64,175,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.03);
-            --radius: 18px;
-            --transition: 0.25s cubic-bezier(.4,0,.2,1);
-        }
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
+            background: #111827;
+            color: #fff;
+            font-family: 'Inter', Arial, sans-serif;
+            overflow: hidden;
         }
         body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #e0e7ff 0%, #f0f2f5 100%);
-            font-family: 'Inter', Arial, sans-serif;
-            color: #222;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        .viewer-container {
+            width: 100vw;
+            height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-        .session-id-topright {
-            position: fixed;
-            top: 24px;
-            right: 36px;
-            background: #e0e7ff;
-            color: var(--primary-dark);
-            border-radius: 8px;
-            padding: 6px 16px;
-            font-size: 1em;
-            font-family: monospace;
-            font-weight: 600;
-            box-shadow: 0 1px 6px 0 rgba(30,64,175,0.08);
-            z-index: 10;
-            letter-spacing: 0.02em;
-        }
-        .container {
-            background: var(--container-bg);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 36px 28px 28px 28px;
-            max-width: 540px;
-            width: 98vw;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: box-shadow var(--transition);
+            background: #111827;
             position: relative;
-        }
-        .container::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: var(--radius);
-            background: linear-gradient(120deg, #c7d2fe 0%, #f0f2f5 100%);
-            opacity: 0.13;
-            z-index: 0;
-        }
-        h1 {
-            color: var(--primary);
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 18px;
-            letter-spacing: -1px;
-            position: relative;
-            z-index: 1;
-        }
-        .join-link-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            width: 100%;
-            justify-content: flex-start;
-        }
-        .join-link-label {
-            font-size: 1em;
-            color: #64748b;
-        }
-        #joinLinkInput {
-            font-size: 1em;
-            padding: 8px 12px;
-            border: 1.5px solid #e0e7ff;
-            border-radius: 7px;
-            background: #f8fafc;
-            color: #222;
-            width: 220px;
-            outline: none;
-        }
-        #copyLinkButton {
-            padding: 10px 22px;
-            font-size: 1.08em;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 16px 0 rgba(34,197,94,0.10);
-            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
-            outline: none;
-            letter-spacing: 0.01em;
-            z-index: 1;
-        }
-        #copyLinkButton.copied {
-            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
+            overflow: hidden;
         }
         #slideDisplay {
-            width: 100%;
-            max-width: 480px;
-            max-height: 480px;
-            background: #eef2ff;
-            border: 2px solid #e0e7ff;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
-            display: block;
-            margin: 0 auto 12px auto;
+            max-width: 100vw;
+            max-height: 100vh;
+            width: 100vw;
+            height: 100vh;
             object-fit: contain;
-            transition: box-shadow var(--transition), border-color var(--transition);
-            z-index: 1;
+            background: #222;
+            touch-action: pinch-zoom;
+            transition: box-shadow 0.2s;
+            user-select: none;
+            -webkit-user-drag: none;
+            display: none;
         }
-        #slideDisplay[style*="display: none"] {
-            margin-bottom: 0;
-        }
-        #saveButton {
-            margin: 14px auto 0 auto;
-            display: block;
-            padding: 10px 22px;
-            font-size: 1.08em;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 16px 0 rgba(34,197,94,0.10);
-            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
-            outline: none;
-            letter-spacing: 0.01em;
-            z-index: 1;
-        }
-        #saveButton:hover:not(:disabled),
-        #copyLinkButton:hover:not(:disabled) {
-            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
-            box-shadow: 0 8px 24px 0 rgba(34,197,94,0.18);
-            transform: translateY(-2px) scale(1.03);
-        }
-        #saveButton:disabled {
-            background: #d1d5db;
-            color: #a1a1aa;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        #status {
-            margin-top: 12px;
-            font-size: 1.05em;
-            font-weight: 500;
-            color: var(--primary-dark);
-            letter-spacing: 0.01em;
-            background: #e0e7ff;
-            border-radius: 8px;
-            padding: 8px 16px;
-            display: inline-block;
-            box-shadow: 0 1px 4px 0 rgba(30,64,175,0.07);
-            z-index: 1;
-        }
-        #initialMessage {
+        #notConnectedMsg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.3em;
+            color: #cbd5e1;
             text-align: center;
-            font-size: 1.08em;
-            color: #64748b;
-            margin-top: 18px;
-            margin-bottom: 0;
-            z-index: 1;
+            z-index: 2;
+        }
+        .save-btn {
+            position: fixed;
+            right: 18px;
+            bottom: 70px;
+            z-index: 10;
+            background: linear-gradient(90deg, #22c55e, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 28px;
+            width: auto;
+            height: 56px;
+            box-shadow: 0 4px 16px 0 rgba(34,197,94,0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            padding: 0 22px;
+            gap: 12px;
+        }
+        .save-btn .save-label {
+            font-size: 1.1em;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            margin-left: 6px;
+            user-select: none;
+        }
+        .save-btn:active {
+            transform: scale(0.95);
+        }
+        .share-link-footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(17,24,39,0.96);
+            padding: 10px 0 8px 0;
+            z-index: 20;
+        }
+        .share-link-btn {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 22px;
+            font-size: 1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+            transition: background 0.2s;
+        }
+        .share-link-btn:active {
+            background: #1e40af;
         }
         @media (max-width: 700px) {
-            .container {
-                padding: 16px 2vw 16px 2vw;
-                max-width: 99vw;
+            .save-btn {
+                width: 48px;
+                height: 48px;
+                font-size: 1.5em;
+                bottom: 62px;
+                right: 12px;
             }
-            #slideDisplay {
-                max-width: 96vw;
-                max-height: 55vw;
-            }
-            .session-id-topright {
-                right: 10px;
-                top: 10px;
+            .share-link-btn {
                 font-size: 0.98em;
-                padding: 5px 10px;
-            }
-            #joinLinkInput {
-                width: 115px;
-                font-size: 0.95em;
+                padding: 9px 16px;
             }
         }
     </style>
 </head>
 <body>
-    <div id="sessionIdTopRight" class="session-id-topright" style="display:none;"></div>
-    <div class="container">
-        <h1>Live Slide</h1>
-        <div class="join-link-row">
-            <span class="join-link-label">Join link:</span>
-            <input id="joinLinkInput" type="text" readonly value="">
-            <button id="copyLinkButton" type="button">Copy</button>
+    <div class="viewer-container">
+        <img id="slideDisplay" alt="Live Presentation Slide">
+        <div id="notConnectedMsg">Not connected yet.<br>Waiting for presenter...</div>
+    </div>
+    <button id="saveButton" class="save-btn" title="Save to device" style="display:none;">
+        <i class="fa-solid fa-download"></i>
+        <span class="save-label">Save</span>
+    </button>
+    <div class="share-link-footer">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <button id="copyLinkButton" class="share-link-btn">
+                <i class="fa-solid fa-link"></i> Share Link
+            </button>
+            <div id="sessionIdDisplay" style="margin-top: 4px; font-size: 0.97em; color: #a5b4fc; letter-spacing: 0.01em;"></div>
         </div>
-        <img id="slideDisplay" src="" alt="Live Presentation Slide" style="display: none;">
-        <button id="saveButton" disabled>Save Slide</button>
-        <p id="initialMessage">Scan the QR code to join the presentation.</p>
-        <div id="status">Connecting...</div>
     </div>
     <script>
+        // Pinch/scroll zoom for image
+        let scale = 1, lastScale = 1, startX = 0, startY = 0, originX = 0, originY = 0, dragging = false;
         const slideDisplay = document.getElementById('slideDisplay');
-        const statusDiv = document.getElementById('status');
+        const notConnectedMsg = document.getElementById('notConnectedMsg');
         const saveButton = document.getElementById('saveButton');
-        const initialMessage = document.getElementById('initialMessage');
-        const joinLinkInput = document.getElementById('joinLinkInput');
         const copyLinkButton = document.getElementById('copyLinkButton');
-        const sessionIdTopRight = document.getElementById('sessionIdTopRight');
+        const sessionIdDisplay = document.getElementById('sessionIdDisplay');
 
         let ws;
         let sessionId;
-        let currentSlideImageDataURL = ''; // To store the received image data URL
+        let currentSlideImageDataURL = '';
 
+        // Extract sessionId from the URL path: /join/:sessionId
+        function getSessionId() {
+            const pathParts = window.location.pathname.split('/');
+            return pathParts[2] || '';
+        }
+        
         function connectWebSocket() {
-            const urlParams = new URLSearchParams(window.location.search);
-            sessionId = urlParams.get('id');
-
-            // Show session ID at top right and join link if present
-            if (sessionId) {
-                sessionIdTopRight.textContent = "Session: " + sessionId;
-                sessionIdTopRight.style.display = "block";
-                const joinUrl = `${window.location.origin}/join/${sessionId}`;
-                joinLinkInput.value = joinUrl;
-            } else {
-                sessionIdTopRight.style.display = "none";
-                joinLinkInput.value = '';
-            }
-
+            sessionId = getSessionId();
             if (!sessionId) {
-                statusDiv.textContent = 'Error: No session ID found in URL. Please scan the QR code again.';
-                saveButton.disabled = true;
-                initialMessage.textContent = 'Please scan the QR code to join the presentation.';
-                initialMessage.style.display = 'block';
+                notConnectedMsg.textContent = 'Error: No session ID found in URL.';
+                sessionIdDisplay.textContent = '';
                 return;
             }
+            const joinUrl = `${window.location.origin}/join/${sessionId}`;
+            copyLinkButton.dataset.link = joinUrl;
+            sessionIdDisplay.textContent = `Session ID: ${sessionId}`;
 
-            initialMessage.style.display = 'none'; // Hide initial message once session ID is found
-            statusDiv.textContent = `Connecting to session ${sessionId}...`;
-
-            // WebSocket connection to your server
             ws = new WebSocket(`ws://${window.location.host}/ws/audience?id=${sessionId}`);
 
             ws.onopen = () => {
-                statusDiv.textContent = `Connected to session ${sessionId}. Waiting for first slide...`;
-                console.log('Audience WebSocket connected.');
-                saveButton.disabled = false;
+                notConnectedMsg.textContent = 'Connected. Waiting for presenter...';
             };
 
+            let awaitingPresenter = false;
+
             ws.onmessage = event => {
+                console.log("Received message:", event.data);
                 try {
                     const message = JSON.parse(event.data);
+                    console.log("Parsed as JSON:", message);
                     if (message.type === 'disconnected') {
-                        slideDisplay.style.display = 'none'; // Hide image
-                        statusDiv.textContent = 'Presentation ended.';
-                        initialMessage.textContent = message.message; // Display presenter's disconnect message
-                        initialMessage.style.display = 'block';
-                        saveButton.disabled = true;
-                        ws.close(); // Close explicitly
+                        console.log("Presenter disconnected.");
+                        slideDisplay.style.display = 'none';
+                        saveButton.style.display = 'none';
+                        notConnectedMsg.textContent = 'Presentation ended.';
+                        notConnectedMsg.style.display = 'block';
+                        awaitingPresenter = false;
+                        ws.close();
+                        return;
+                    }
+                    if (message.type === 'awaiting') {
+                        console.log("Presenter stopped sharing, awaiting...");
+                        slideDisplay.style.display = 'none';
+                        slideDisplay.src = ''; // Clear the image source
+                        saveButton.style.display = 'none';
+                        notConnectedMsg.textContent = 'Awaiting presenter to share...';
+                        notConnectedMsg.style.display = 'block';
+                        awaitingPresenter = true;
                         return;
                     }
                 } catch (e) {
-                    // Not a JSON message, assume it's image data URL
+                    console.log("Not JSON, assuming image data.");
                 }
-                currentSlideImageDataURL = event.data; // Store the received image data URL
-                slideDisplay.src = currentSlideImageDataURL; // Set image source
-                slideDisplay.style.display = 'block'; // Show the image
-                statusDiv.textContent = `Connected.`; // Update status once slide arrives
+                // Only show image if not awaiting
+                if (event.data.startsWith('data:image/')) {
+                    console.log("Displaying new slide image.");
+                    awaitingPresenter = false;
+                    currentSlideImageDataURL = event.data;
+                    slideDisplay.src = currentSlideImageDataURL;
+                    slideDisplay.style.display = 'block';
+                    saveButton.style.display = 'flex';
+                    notConnectedMsg.style.display = 'none';
+                    resetZoom();
+                } else if (awaitingPresenter && event.data.startsWith('data:image/')) {
+                    console.log("Ignored image because awaiting presenter.");
+                }
             };
 
             ws.onclose = () => {
-                slideDisplay.style.display = 'none'; // Hide image
-                statusDiv.textContent = 'Disconnected from presentation.';
-                initialMessage.textContent = 'You have been disconnected from the presentation. Please refresh or scan a new QR code if the presentation is still active.';
-                initialMessage.style.display = 'block';
-                console.log('Audience WebSocket disconnected.');
-                saveButton.disabled = true;
+                slideDisplay.style.display = 'none';
+                saveButton.style.display = 'none';
+                notConnectedMsg.textContent = 'Disconnected. You may close this tab.';
+                notConnectedMsg.style.display = 'block';
+                sessionIdDisplay.textContent = '';
+                copyLinkButton.disabled = true;
+                copyLinkButton.style.background = '#6b7280'; // grey out
+                copyLinkButton.style.cursor = 'not-allowed'; // show not-allowed cursor
+                copyLinkButton.innerHTML = '<i class="fa-solid fa-link"></i> Share Link';
+                copyLinkButton.removeAttribute('data-link');    
             };
 
             ws.onerror = (error) => {
-                slideDisplay.style.display = 'none'; // Hide image
-                statusDiv.textContent = 'Connection error. Please check your internet or refresh.';
-                initialMessage.textContent = 'Connection error. Please check your internet connection or the presenter\'s status.';
-                initialMessage.style.display = 'block';
-                console.error('Audience WebSocket error:', error);
-                saveButton.disabled = true;
+                slideDisplay.style.display = 'none';
+                saveButton.style.display = 'none';
+                notConnectedMsg.textContent = 'Connection error. Please refresh.';
+                notConnectedMsg.style.display = 'block';
+                sessionIdDisplay.textContent = '';
+                copyLinkButton.disabled = true;
+                copyLinkButton.style.background = '#6b7280';
+                copyLinkButton.style.cursor = 'not-allowed';
+                copyLinkButton.innerHTML = '<i class="fa-solid fa-link"></i> Share Link';
+                copyLinkButton.removeAttribute('data-link');
             };
         }
 
-        // Copy join link
-        copyLinkButton.addEventListener('click', () => {
-            if (joinLinkInput.value) {
-                joinLinkInput.select();
-                joinLinkInput.setSelectionRange(0, 99999); // For mobile devices
-                document.execCommand('copy');
-                copyLinkButton.classList.add('copied');
-                copyLinkButton.textContent = "Copied!";
-                setTimeout(() => {
-                    copyLinkButton.classList.remove('copied');
-                    copyLinkButton.textContent = "Copy";
-                }, 1200);
-            }
-        });
-
+        // Save slide
         saveButton.onclick = () => {
             if (currentSlideImageDataURL) {
                 const a = document.createElement('a');
@@ -339,7 +270,83 @@
             }
         };
 
-        // Initialize when the page loads
+        // Copy link
+        copyLinkButton.onclick = () => {
+            const link = copyLinkButton.dataset.link;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(link);
+            } else {
+                // fallback
+                const temp = document.createElement('input');
+                temp.value = link;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                document.body.removeChild(temp);
+            }
+            copyLinkButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            setTimeout(() => {
+                copyLinkButton.innerHTML = '<i class="fa-solid fa-link"></i> Share Link';
+            }, 1200);
+        };
+
+        // Pinch/scroll/drag zoom logic
+        function resetZoom() {
+            scale = 1;
+            lastScale = 1;
+            slideDisplay.style.transform = '';
+        }
+        // Touch pinch zoom
+        slideDisplay.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 2) {
+                lastScale = scale;
+            } else if (e.touches.length === 1) {
+                dragging = true;
+                startX = e.touches[0].clientX - originX;
+                startY = e.touches[0].clientY - originY;
+            }
+        });
+        slideDisplay.addEventListener('touchmove', function(e) {
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (!slideDisplay._lastDist) slideDisplay._lastDist = dist;
+                scale = Math.max(1, Math.min(6, lastScale * (dist / slideDisplay._lastDist)));
+                slideDisplay.style.transform = `scale(${scale})`;
+            } else if (e.touches.length === 1 && dragging) {
+                originX = e.touches[0].clientX - startX;
+                originY = e.touches[0].clientY - startY;
+                slideDisplay.style.transform = `scale(${scale}) translate(${originX/scale}px,${originY/scale}px)`;
+            }
+        });
+        slideDisplay.addEventListener('touchend', function(e) {
+            if (e.touches.length < 2) {
+                slideDisplay._lastDist = null;
+                lastScale = scale;
+            }
+            if (e.touches.length === 0) {
+                dragging = false;
+            }
+        });
+        // Mouse wheel zoom (desktop)
+        slideDisplay.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            let delta = e.deltaY < 0 ? 0.1 : -0.1;
+            scale = Math.max(1, Math.min(6, scale + delta));
+            slideDisplay.style.transform = `scale(${scale})`;
+        }, { passive: false });
+
+        // Double tap/double click to reset zoom
+        let lastTap = 0;
+        slideDisplay.addEventListener('click', function(e) {
+            const now = Date.now();
+            if (now - lastTap < 350) {
+                resetZoom();
+            }
+            lastTap = now;
+        });
+
         connectWebSocket();
     </script>
 </body>
