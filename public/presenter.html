@@ -107,21 +107,22 @@
         }
         .share-row {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 32px;
+            gap: 18px;
             width: 100%;
             margin-top: 0;
             margin-bottom: 0;
             z-index: 1;
         }
-        .qr-section {
+        .qr-section, .link-section {
+            min-width: unset;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-width: 190px;
         }
         #qrCode {
             border: 1.5px solid #e0e7ff;
@@ -130,7 +131,6 @@
             border-radius: 12px;
             display: inline-block;
             box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
-            margin-bottom: 8px;
         }
         .or-label {
             font-size: 1.05em;
@@ -170,13 +170,14 @@
             border-radius: 7px;
             background: #f8fafc;
             color: #222;
-            width: 100%;
+            width: auto;
+            min-width: 80px;
             max-width: 100%;
-            min-width: 0;
             font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
             outline: none;
             box-sizing: border-box;
-            text-align: center; /* Add this line */
+            text-align: center;
+            display: inline-block;
         }
         #copyLinkButton {
             padding: 8px 18px;
@@ -198,7 +199,7 @@
         .buttons-group {
             display: flex;
             justify-content: center;
-            margin: 30px 0 0 0;
+            margin: 5px 0 0 0;
             gap: 18px;
             position: relative;
             z-index: 1;
@@ -292,33 +293,41 @@
         }
     </style>
 </head>
+
+<!-- <div id="fpsCounter" style="position:absolute;top:12px;right:18px;background:rgba(0,0,0,0.55);color:#fff;padding:4px 12px;border-radius:8px;font-size:1em;z-index:10;pointer-events:none;"></div> -->
+
 <body>
     <div class="container">
         <h1>Presenter Dashboard</h1>
         <div id="status" class="center-text">Loading...</div>
-        <div class="main-content">
+       <div class="main-content">
             <video id="previewVideo" autoplay muted></video>
-            <!-- <div id="fpsCounter" style="position:absolute;top:12px;right:18px;background:rgba(0,0,0,0.55);color:#fff;padding:4px 12px;border-radius:8px;font-size:1em;z-index:10;pointer-events:none;"></div> -->
             <div class="share-row">
-                <div class="qr-section">
-                    <div id="qrCode"></div>
+            <div class="qr-section">
+                <div id="qrCode"></div>
+                <div class="qr-desc" style="margin-top:5px; color:#64748b; font-size:1.05em; text-align:center;">
+                    Scan this QR code to join 😎
                 </div>
+            </div>
+                <div class="buttons-group">
+                    <button id="startSharingButton" disabled>Start Sharing Screen</button>
+                    <button id="stopSharingButton" disabled>Stop Sharing</button>
+                    <button id="startNewSessionButton">
+                        <i class="fas fa-rotate-right"></i> Start New Session
+                    </button>
+                </div>
+                <p id="noPermissionMessage">Permissions denied. Please allow screen sharing.</p>
                 <div class="link-section">
-                    <div class="copy-link-label">Share this link with your audience:</div>
+                    <div class="copy-link-label">...or share this link with your audience:</div>
                     <div class="copy-link-row">
                         <input id="joinLinkInput" type="text" readonly value="">
+                        <span id="joinLinkMirror" style="visibility:hidden;position:absolute;white-space:pre;font-family:'Fira Mono','Consolas','Menlo',monospace;font-size:1em;"></span>
                         <button id="copyLinkButton" type="button">Copy</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="buttons-group">
-            <button id="startSharingButton" disabled>Start Sharing Screen</button>
-            <button id="stopSharingButton" disabled>Stop Sharing</button>
-            <button id="startNewSessionButton">
-            <i class="fas fa-rotate-right"></i> Start New Session
-            </button>        </div>
-        <p id="noPermissionMessage">Permissions denied. Please allow screen sharing.</p>
+     </div>
     </div>
     <script>
         const statusDiv = document.getElementById('status');
@@ -330,6 +339,19 @@
         const noPermissionMessage = document.getElementById('noPermissionMessage');
         const joinLinkInput = document.getElementById('joinLinkInput');
         const copyLinkButton = document.getElementById('copyLinkButton');
+        const input = document.getElementById('joinLinkInput');
+        const mirror = document.getElementById('joinLinkMirror');
+
+        function resizeInput() {
+        mirror.textContent = input.value || input.placeholder || '';
+        input.style.width = (mirror.offsetWidth + 40) + 'px'; //padding
+        }
+
+        // Initial resize
+        resizeInput();
+
+        // Resize on input
+        input.addEventListener('input', resizeInput);
 
         // --- Core Variables for Screen Sharing ---
         let ws;
@@ -547,7 +569,7 @@
 
             // Set the join URL in the input for copying
             joinLinkInput.value = joinUrl;
-
+            resizeInput();
             statusDiv.textContent = `Session ID: ${sessionId} | Connecting...`;
 
             // WebSocket connection to your server
@@ -555,7 +577,7 @@
             ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/presenter?id=${sessionId}`);
 
             ws.onopen = () => {
-                statusDiv.innerHTML = `Ready to Share. Click 'Start Sharing'.`;
+                statusDiv.innerHTML = `Ready to Share Screen. Click 'Start Sharing'.`;
                 console.log('Presenter WebSocket connected.');
                 console.log('Session ID:', sessionId); // Log session ID to console only
                 startSharingButton.disabled = false;
