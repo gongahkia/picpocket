@@ -107,18 +107,18 @@
         }
         .share-row {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;      /* horizontal layout */
+            align-items: center;  
             justify-content: center;
-            gap: 18px;
+            gap: 32px;                /* space between QR and link */
             width: 100%;
-            margin-top: 0;
+            margin-top: 20px;
             margin-bottom: 0;
             z-index: 1;
         }
         .qr-section, .link-section {
+            width: auto;
             min-width: unset;
-            width: 100%;
             align-items: center;
             justify-content: center;
             display: flex;
@@ -258,7 +258,7 @@
         }
         #noPermissionMessage {
             color: var(--danger);
-            margin-top: 14px;
+            margin-top: 30px;
             font-size: 1.05em;
             display: none;
             position: relative;
@@ -300,23 +300,23 @@
     <div class="container">
         <h1>Presenter Dashboard</h1>
         <div id="status" class="center-text">Loading...</div>
-       <div class="main-content">
+        <div class="main-content">
             <video id="previewVideo" autoplay muted></video>
-            <div class="share-row">
-            <div class="qr-section">
-                <div id="qrCode"></div>
-                <div class="qr-desc" style="margin-top:5px; color:#64748b; font-size:1.05em; text-align:center;">
-                    Scan this QR code to join 😎
-                </div>
+            <div class="buttons-group">
+                <button id="startSharingButton" disabled>Start Sharing Screen</button>
+                <button id="stopSharingButton" disabled>Stop Sharing</button>
+                <button id="startNewSessionButton">
+                    <i class="fas fa-rotate-right"></i> Start New Session
+                </button>
             </div>
-                <div class="buttons-group">
-                    <button id="startSharingButton" disabled>Start Sharing Screen</button>
-                    <button id="stopSharingButton" disabled>Stop Sharing</button>
-                    <button id="startNewSessionButton">
-                        <i class="fas fa-rotate-right"></i> Start New Session
-                    </button>
+            <p id="noPermissionMessage">Permission denied - please allow screen sharing.</p>
+            <div class="share-row">
+                <div class="qr-section">
+                    <div id="qrCode"></div>
+                    <div class="qr-desc" style="margin-top:5px; color:#64748b; font-size:1.05em; text-align:center;">
+                        Scan this QR code to join 😎
+                    </div>
                 </div>
-                <p id="noPermissionMessage">Permissions denied. Please allow screen sharing.</p>
                 <div class="link-section">
                     <div class="copy-link-label">...or share this link with your audience:</div>
                     <div class="copy-link-row">
@@ -326,7 +326,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div>            
      </div>
     </div>
     <script>
@@ -344,7 +344,7 @@
 
         function resizeInput() {
         mirror.textContent = input.value || input.placeholder || '';
-        input.style.width = (mirror.offsetWidth + 40) + 'px'; //padding
+        input.style.width = (mirror.offsetWidth + 50) + 'px'; //padding
         }
 
         // Initial resize
