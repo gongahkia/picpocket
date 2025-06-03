@@ -40,6 +40,7 @@ app.get('/join/:sessionId', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'audience.html'));
 });
 
+app.get('/healthz', (req, res) => res.send('ok'));
 
 // --- WebSocket Handling ---
 wss.on('connection', (ws, req) => {
