@@ -124,6 +124,25 @@
             display: flex;
             flex-direction: column;
         }
+        #openAudienceButton {
+            padding: 8px 18px;
+            font-size: 1em;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, #868686, rgb(5, 33, 38));
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+            outline: none;
+            letter-spacing: 0.01em;
+            box-shadow: 0 2px 8px 0 rgba(37,99,235,0.06);
+            margin-left: 8px;
+        }
+        #openAudienceButton:hover {
+            background: linear-gradient(90deg, #1e40af, #15803d);
+            transform: translateY(-2px) scale(1.03);
+        }
         #qrCode {
             border: 1.5px solid #e0e7ff;
             padding: 13px;
@@ -155,13 +174,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
-            max-width: 100%;      /* Allow to fill parent */
+            max-width: 100%;
         }
-        /* Optional: Add margin to the button for spacing */
-        #copyLinkButton {
-            margin-top: 6px;
+        .copy-link-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
         }
         #joinLinkInput {
             font-size: 1em;
@@ -322,7 +345,14 @@
                     <div class="copy-link-row">
                         <input id="joinLinkInput" type="text" readonly value="">
                         <span id="joinLinkMirror" style="visibility:hidden;position:absolute;white-space:pre;font-family:'Fira Mono','Consolas','Menlo',monospace;font-size:1em;"></span>
-                        <button id="copyLinkButton" type="button">Copy</button>
+                        <div class="copy-link-buttons">
+                            <button id="copyLinkButton" type="button">Copy</button>
+                            <button id="openAudienceButton" type="button">
+                                Open <i class="fa-solid fa-arrow-up-right-from-square"></i> 
+                            </button>
+                        </div>
+                    </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -352,6 +382,14 @@
 
         // Resize on input
         input.addEventListener('input', resizeInput);
+
+
+        const openAudienceButton = document.getElementById('openAudienceButton');
+        openAudienceButton.addEventListener('click', () => {
+            const url = joinLinkInput.value;
+            window.open(url, '_blank', 'noopener');
+        });
+
 
         // --- Core Variables for Screen Sharing ---
         let ws;
