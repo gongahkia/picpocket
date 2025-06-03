@@ -178,7 +178,8 @@
             copyLinkButton.dataset.link = joinUrl;
             sessionIdDisplay.textContent = `Session ID: ${sessionId}`;
 
-            ws = new WebSocket(`ws://${window.location.host}/ws/audience?id=${sessionId}`);
+            const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+            ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/audience?id=${sessionId}`);
 
             ws.onopen = () => {
                 notConnectedMsg.textContent = 'Connected. Waiting for presenter...';

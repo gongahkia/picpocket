@@ -555,7 +555,8 @@
             statusDiv.textContent = `Session ID: ${sessionId} | Connecting...`;
 
             // WebSocket connection to your server
-            ws = new WebSocket(`ws://${window.location.host}/ws/presenter?id=${sessionId}`);
+            const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+            ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/presenter?id=${sessionId}`);
 
             ws.onopen = () => {
                 statusDiv.innerHTML = `Ready to Share. Click 'Start Sharing'.`;
