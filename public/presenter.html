@@ -459,14 +459,8 @@
 
             // --- WebP or JPEG encoding ---
             let currentImageDataURL;
-            if (captureCanvas.toDataURL('image/webp').indexOf('data:image/webp') === 0) {
-                // Browser supports WebP
-                currentImageDataURL = captureCanvas.toDataURL('image/webp', QUALITY); // 0.5 = quality
-            } else {
-                // Fallback to JPEG
-                currentImageDataURL = captureCanvas.toDataURL('image/jpeg', QUALITY);
-            }
-
+            currentImageDataURL = captureCanvas.toDataURL('image/png');
+            
             if (intensityDiff > PIXEL_CHANGE_THRESHOLD_PERCENT || !firstFrameSent) {
                 console.log("Sending image to server", currentImageDataURL.slice(0, 30));
                 ws.send(currentImageDataURL);
