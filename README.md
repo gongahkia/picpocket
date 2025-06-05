@@ -10,11 +10,37 @@ From venues with tiny screens to sitting too far back at church, PicPocket makes
 
 ## Usage
 
-...
+Access PicPocket live at [picpocket.onrender.com](https://picpocket.onrender.com/).
 
 ## Architecture 
 
-...
+```mermaid
+sequenceDiagram
+    actor Presenter as Presenter
+    participant Server
+    actor Audience as Audience
+
+    Presenter->>Server: GET /presenter
+    Server->>Presenter: Redirect to /presenter.html?id=:sessionId
+    Presenter->>Server: WS /ws/presenter?id=:sessionId
+    Server-->>Presenter: WebSocket connection established
+
+    Audience->>Server: GET /join/:sessionId
+    Server->>Audience: Serve audience.html
+    Audience->>Server: WS /ws/audience?id=:sessionId
+    Server-->>Audience: WebSocket connection established
+
+    loop Screen Sharing
+        Presenter->>Server: Send screen frame (data:image/...)
+        Server->>Audience: Broadcast frame to all audience WS
+        Audience->>Server: POST /api/save-image (with imageData)
+        Server->>Audience: Return compressed PNG
+    end
+
+    Presenter->>Server: Stop sharing (WS close)
+    Server->>Audience: Send disconnected message
+    Server->>Audience: Close all audience WS connections
+```
 
 ## Nerd details
 
