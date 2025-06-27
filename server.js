@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid'); // For unique session IDs
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
-const { uniqueNamesGenerator, adjectives, animals, colors } = require('unique-names-generator'); 
+const { uniqueNamesGenerator, adjectives, animals, colors, countries, names, starWars } = require('unique-names-generator'); 
 
 // Store active sessions: sessionId -> { presenterWs: WebSocket, audienceWs: Set<WebSocket> }
 const activeSessions = new Map();
@@ -42,16 +42,22 @@ app.post('/api/save-image', async (req, res) => {
 // --- HTTP Endpoints ---
 // Presenter endpoint: Generates a new session and redirects to presenter.html with ID
 app.get('/presenter', (req, res) => {
-    // Replace uuidv4() with uniqueNamesGenerator
-    const sessionId = uniqueNamesGenerator({
-        dictionaries: [adjectives, animals, colors],
-        separator: '-',
-        style: 'lowerCase'
-    });
-    // Initialize session with null presenterWs and empty audience set
+    let sessionId;
+    // Try to generate a unique sessionId
+    do {
+        sessionId = uniqueNamesGenerator({
+            dictionaries: [adjectives, colors, animals, countries, names, starWars], // wordpool
+            separator: '-',
+            style: 'lowerCase',
+            length: 2
+        });
+    } while (activeSessions.has(sessionId)); // Check for collisions
+
+    // Initialize session
     activeSessions.set(sessionId, { presenterWs: null, audienceWs: new Set(), latestImage: null });
     console.log(`New session created: ${sessionId}`);
-    // Redirect to the actual presenter HTML file with the session ID in the URL
+
+    // Redirect to presenter page with session ID
     res.redirect(`/presenter.html?id=${sessionId}`);
 });
 
@@ -140,12 +146,13 @@ wss.on('connection', (ws, req) => {
                     audienceWs.close();
                 }
             });
-            activeSessions.delete(sessionId); // Clean up session
+            // Always delete the session on presenter disconnect
+            activeSessions.delete(sessionId);
             console.log(`[WS] Session ${sessionId} closed and cleaned up.`);
         } else if (session.audienceWs.has(ws)) {
             session.audienceWs.delete(ws);
             console.log(`[WS] Audience disconnected from session: ${sessionId}. Remaining audience: ${session.audienceWs.size}`);
-            // If presenter is gone and last audience leaves, clean up too
+            // Always delete the session if no presenter and no audience remain
             if (!session.presenterWs && session.audienceWs.size === 0) {
                  activeSessions.delete(sessionId);
                  console.log(`[WS] Session ${sessionId} (empty) closed and cleaned up.`);

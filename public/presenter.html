@@ -360,6 +360,11 @@
      </div>
     </div>
     <script>
+
+        if (!('mediaDevices' in navigator && 'getDisplayMedia' in navigator.mediaDevices)) {
+            alert('Screen sharing is only supported on desktop browsers. Please use a laptop or desktop.');
+            document.getElementById('startSharingButton').disabled = true;
+        }
         const statusDiv = document.getElementById('status');
         const qrCodeDiv = document.getElementById('qrCode');
         const startSharingButton = document.getElementById('startSharingButton');
