@@ -360,6 +360,38 @@
      </div>
     </div>
     <script>
+        let serverAlive = true;
+        const SERVER_PING_INTERVAL_MS = 5000; // 5 seconds
+
+        function setServerDownUI() {
+            serverAlive = false;
+            statusDiv.textContent = "Server is unavailable. Please close this tab and start a new session later.";
+            startSharingButton.disabled = true;
+            stopSharingButton.disabled = true;
+            copyLinkButton.disabled = true;
+            openAudienceButton.disabled = true;
+            startNewSessionButton.style.display = 'block';
+            // Optionally, visually dim or hide other UI elements
+        }
+
+        // Periodically ping the server to check if it's alive
+        function startServerPing() {
+            setInterval(async () => {
+                try {
+                    // Use a lightweight endpoint, e.g., /health or /
+                    const res = await fetch("/", { method: "HEAD", cache: "no-store" });
+                    if (!res.ok) throw new Error("Server not OK");
+                    if (!serverAlive) {
+                        // Server came back, reload to restore UI
+                        window.location.reload();
+                    }
+                } catch (e) {
+                    if (serverAlive) setServerDownUI();
+                }
+            }, SERVER_PING_INTERVAL_MS);
+        }
+
+
 
         if (!('mediaDevices' in navigator && 'getDisplayMedia' in navigator.mediaDevices)) {
             alert('Screen sharing is only supported on desktop browsers. Please use a laptop or desktop.');
@@ -497,7 +529,7 @@
                 }
                 startSharingButton.disabled = false;
                 stopSharingButton.disabled = true;
-                startNewSessionButton.style.display = 'block'; // Show new session button on error
+                // startNewSessionButton.style.display = 'block'; // Show new session button on error
             }
         }
         function setSendFps(fps) {
@@ -629,12 +661,45 @@
             };
 
             ws.onclose = () => {
-                statusDiv.textContent = 'Disconnected. Click "Start New Session" to resume.';
-                console.log('Presenter WebSocket disconnected.');
-                startSharingButton.disabled = true;
-                stopSharingButton.disabled = true;
-                startNewSessionButton.style.display = 'block'; // Show new session button on disconnect
-                stopPresenting(); // Ensure everything is cleaned up
+                if (!serverAlive) return; // Already handled by server ping
+                // Show a clear error and only the start new session button
+                document.querySelector('.container').innerHTML = `
+                    <h1 style="text-align:center;">Presenter Dashboard</h1>
+                    <div style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 300px;
+                    ">
+                        <div id="status" class="center-text" style="margin-bottom:32px;">
+                            <span style="font-size:1.2em;color:#dc3545;">Session not found or expired.<br>Please start a new session.</span>
+                        </div>
+                        <button id="startNewSessionButton"
+                            style="
+                                background: linear-gradient(90deg, #22c55e, #2563eb);
+                                color: #fff;
+                                font-size: 1.35em;
+                                font-weight: 700;
+                                border-radius: 14px;
+                                box-shadow: 0 4px 16px 0 rgba(37,99,235,0.13);
+                                padding: 26px 60px;
+                                margin-top: 40px;
+                                border: none;
+                                cursor: pointer;
+                                transition: background 0.2s, transform 0.2s;
+                                z-index: 10;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">
+                            <i class="fas fa-rotate-right" style="margin-right: 10px;"></i> Start New Session
+                        </button>
+                    </div>
+                `;
+                document.getElementById('startNewSessionButton').onclick = () => {
+                    window.location.href = '/presenter';
+                };
             };
 
             ws.onerror = (error) => {
@@ -674,6 +739,8 @@
 
         // Initialize when the page loads
         initializePresenter();
+        startServerPing();
+
     </script>
 </body>
 </html>

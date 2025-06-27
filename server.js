@@ -1,8 +1,10 @@
+const custom_words = require('./words'); // Adjust path if needed
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid'); // For unique session IDs
+
 
 const app = express();
 const server = http.createServer(app);
@@ -46,7 +48,7 @@ app.get('/presenter', (req, res) => {
     // Try to generate a unique sessionId
     do {
         sessionId = uniqueNamesGenerator({
-            dictionaries: [adjectives, colors, animals, countries, names, starWars], // wordpool
+            dictionaries: [colors, custom_words], // wordpool
             separator: '-',
             style: 'lowerCase',
             length: 2
