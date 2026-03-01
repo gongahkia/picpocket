@@ -42,10 +42,6 @@ sequenceDiagram
     Server->>Audience: Close all audience WS connections
 ```
 
-## Nerd details
-
-...
-
 ## Contributors
 
 <table>
