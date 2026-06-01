@@ -1,4 +1,12 @@
 module.exports = {
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        browserName: 'chromium',
+      },
+    },
+  ],
   testDir: './test/e2e',
   timeout: 15000,
   use: {
