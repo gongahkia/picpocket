@@ -1,4 +1,4 @@
-[![](https://img.shields.io/badge/picpocket_1.0.0-passing-green)](https://github.com/gongahkia/tanabata/releases/tag/1.0.0) 
+[![](https://img.shields.io/badge/picpocket_1.0.0-passing-green)](https://github.com/gongahkia/tanabata/releases/tag/1.0.0)
 ![](https://github.com/gongahkia/picpocket/actions/workflows/ci.yml/badge.svg)
 ![](https://img.shields.io/badge/picpocket_1.0.0-deployment_down-orange)
 
@@ -17,16 +17,15 @@
 
 A presenter shares their screen once, audience members join with a QR code or link, and the current slide appears live on each audience device.
 
-
 ## Features
 
-* Presenter sessions with readable two-word IDs
-* Cryptographic presenter tokens so audience links cannot publish frames
-* QR code and copyable audience join link
-* Live frame relay
-* Late audience joiners receive the latest frame
-* Audience zoom, pan and share-link
-* Server-side PNG saves
+- Presenter sessions with readable two-word IDs
+- Cryptographic presenter tokens so audience links cannot publish frames
+- QR code and copyable audience join link
+- Live frame relay
+- Late audience joiners receive the latest frame
+- Audience zoom, pan and share-link
+- Server-side PNG saves
 
 ## Architecture
 
