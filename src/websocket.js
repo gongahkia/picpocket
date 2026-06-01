@@ -1,9 +1,9 @@
-const WebSocket = require('ws');
+const WebSocket = require("ws");
 
 const MESSAGE_TYPES = {
-  AWAITING: 'awaiting',
-  DISCONNECTED: 'disconnected',
-  FRAME: 'frame',
+  AWAITING: "awaiting",
+  DISCONNECTED: "disconnected",
+  FRAME: "frame",
 };
 
 function attachWebSocketServer({ config, logger, server, sessions }) {
@@ -12,35 +12,35 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
     server,
   });
 
-  wss.on('connection', (ws, req) => {
+  wss.on("connection", (ws, req) => {
     const { role, sessionId } = parseRequest(req);
 
     if (!sessions.isValidSessionId(sessionId)) {
-      closeWithPolicy(ws, 'Invalid session ID');
+      closeWithPolicy(ws, "Invalid session ID");
       return;
     }
 
     const session = sessions.getSession(sessionId);
     if (!session) {
-      closeWithPolicy(ws, 'Session not found');
+      closeWithPolicy(ws, "Session not found");
       return;
     }
 
-    if (role === 'presenter') {
+    if (role === "presenter") {
       connectPresenter({ logger, session, sessionId, ws });
-    } else if (role === 'audience') {
+    } else if (role === "audience") {
       if (!connectAudience({ config, logger, session, sessionId, ws })) return;
     } else {
-      closeWithPolicy(ws, 'Unknown WebSocket role');
+      closeWithPolicy(ws, "Unknown WebSocket role");
       return;
     }
 
-    ws.on('message', (rawMessage) => {
+    ws.on("message", (rawMessage) => {
       if (ws !== session.presenterWs) return;
 
       const message = parsePresenterMessage(rawMessage);
       if (!message) {
-        closeWithPolicy(ws, 'Invalid presenter message');
+        closeWithPolicy(ws, "Invalid presenter message");
         return;
       }
 
@@ -55,12 +55,12 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
       broadcast(session.audienceWs, message);
     });
 
-    ws.on('close', () => {
+    ws.on("close", () => {
       if (ws === session.presenterWs) {
         logger.info(`Presenter disconnected from session: ${sessionId}`);
         session.presenterWs = null;
         broadcast(session.audienceWs, {
-          message: 'Presenter disconnected. Presentation ended.',
+          message: "Presenter disconnected. Presentation ended.",
           type: MESSAGE_TYPES.DISCONNECTED,
         });
         closeAudienceConnections(session.audienceWs);
@@ -78,7 +78,7 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
       }
     });
 
-    ws.on('error', (error) => {
+    ws.on("error", (error) => {
       logger.warn(`WebSocket error for ${role}/${sessionId}: ${error.message}`);
     });
   });
@@ -98,8 +98,11 @@ function broadcast(audienceWs, message) {
 
 function closeAudienceConnections(audienceWs) {
   audienceWs.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN || client.readyState === WebSocket.CONNECTING) {
-      client.close(1000, 'Presentation ended');
+    if (
+      client.readyState === WebSocket.OPEN ||
+      client.readyState === WebSocket.CONNECTING
+    ) {
+      client.close(1000, "Presentation ended");
     }
   });
   audienceWs.clear();
@@ -111,12 +114,14 @@ function closeWithPolicy(ws, reason) {
 
 function connectAudience({ config, logger, session, sessionId, ws }) {
   if (session.audienceWs.size >= config.maxAudiencePerSession) {
-    closeWithPolicy(ws, 'Audience limit reached');
+    closeWithPolicy(ws, "Audience limit reached");
     return false;
   }
 
   session.audienceWs.add(ws);
-  logger.info(`Audience connected to session: ${sessionId}. Total audience: ${session.audienceWs.size}`);
+  logger.info(
+    `Audience connected to session: ${sessionId}. Total audience: ${session.audienceWs.size}`,
+  );
 
   if (session.latestFrame && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(session.latestFrame));
@@ -126,8 +131,11 @@ function connectAudience({ config, logger, session, sessionId, ws }) {
 }
 
 function connectPresenter({ logger, session, sessionId, ws }) {
-  if (session.presenterWs && session.presenterWs.readyState === WebSocket.OPEN) {
-    closeWithPolicy(ws, 'Presenter already connected');
+  if (
+    session.presenterWs &&
+    session.presenterWs.readyState === WebSocket.OPEN
+  ) {
+    closeWithPolicy(ws, "Presenter already connected");
     return;
   }
 
@@ -136,25 +144,31 @@ function connectPresenter({ logger, session, sessionId, ws }) {
 }
 
 function isImageDataUrl(value) {
-  return typeof value === 'string' && /^data:image\/(png|jpeg|jpg|webp);base64,/.test(value);
+  return (
+    typeof value === "string" &&
+    /^data:image\/(png|jpeg|jpg|webp);base64,/.test(value)
+  );
 }
 
 function parsePresenterMessage(rawMessage) {
   let message;
 
   try {
-    message = JSON.parse(rawMessage.toString('utf8'));
-  } catch (error) {
+    message = JSON.parse(rawMessage.toString("utf8"));
+  } catch {
     return null;
   }
 
-  if (!message || typeof message !== 'object') return null;
+  if (!message || typeof message !== "object") return null;
 
   if (message.type === MESSAGE_TYPES.AWAITING) {
     return { type: MESSAGE_TYPES.AWAITING };
   }
 
-  if (message.type === MESSAGE_TYPES.FRAME && isImageDataUrl(message.imageData)) {
+  if (
+    message.type === MESSAGE_TYPES.FRAME &&
+    isImageDataUrl(message.imageData)
+  ) {
     return {
       imageData: message.imageData,
       sentAt: Number.isFinite(message.sentAt) ? message.sentAt : Date.now(),
@@ -166,12 +180,12 @@ function parsePresenterMessage(rawMessage) {
 }
 
 function parseRequest(req) {
-  const url = new URL(req.url, 'http://localhost');
-  const [, wsPrefix, role] = url.pathname.split('/');
+  const url = new URL(req.url, "http://localhost");
+  const [, wsPrefix, role] = url.pathname.split("/");
 
   return {
-    role: wsPrefix === 'ws' ? role : null,
-    sessionId: url.searchParams.get('id') || '',
+    role: wsPrefix === "ws" ? role : null,
+    sessionId: url.searchParams.get("id") || "",
   };
 }
 

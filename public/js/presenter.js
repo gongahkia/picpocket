@@ -1,7 +1,7 @@
 (function () {
   const MESSAGE_TYPES = {
-    AWAITING: 'awaiting',
-    FRAME: 'frame',
+    AWAITING: "awaiting",
+    FRAME: "frame",
   };
 
   const CAPTURE = {
@@ -11,7 +11,7 @@
     imageQuality: 0.72,
     lowFps: 1,
     maxFrameDimension: 1600,
-    mimeType: 'image/jpeg',
+    mimeType: "image/jpeg",
     pixelChangeThresholdPercent: 0.01,
   };
 
@@ -23,65 +23,80 @@
     mediaStream: null,
     sendIntervalId: null,
     serverAlive: true,
-    sessionId: '',
+    sessionId: "",
     ws: null,
   };
 
-  const statusEl = document.getElementById('status');
-  const sessionBadge = document.getElementById('sessionBadge');
-  const qrCodeImage = document.getElementById('qrCodeImage');
-  const startSharingButton = document.getElementById('startSharingButton');
-  const stopSharingButton = document.getElementById('stopSharingButton');
-  const startNewSessionButton = document.getElementById('startNewSessionButton');
-  const previewVideo = document.getElementById('previewVideo');
-  const noPermissionMessage = document.getElementById('noPermissionMessage');
-  const joinLinkInput = document.getElementById('joinLinkInput');
-  const copyLinkButton = document.getElementById('copyLinkButton');
-  const openAudienceButton = document.getElementById('openAudienceButton');
+  const statusEl = document.getElementById("status");
+  const sessionBadge = document.getElementById("sessionBadge");
+  const qrCodeImage = document.getElementById("qrCodeImage");
+  const startSharingButton = document.getElementById("startSharingButton");
+  const stopSharingButton = document.getElementById("stopSharingButton");
+  const startNewSessionButton = document.getElementById(
+    "startNewSessionButton",
+  );
+  const previewVideo = document.getElementById("previewVideo");
+  const noPermissionMessage = document.getElementById("noPermissionMessage");
+  const joinLinkInput = document.getElementById("joinLinkInput");
+  const copyLinkButton = document.getElementById("copyLinkButton");
+  const openAudienceButton = document.getElementById("openAudienceButton");
 
-  const captureCanvas = document.createElement('canvas');
-  const captureCtx = captureCanvas.getContext('2d', { willReadFrequently: true });
-  const compareCanvas = document.createElement('canvas');
-  const compareCtx = compareCanvas.getContext('2d', { willReadFrequently: true });
+  const captureCanvas = document.createElement("canvas");
+  const captureCtx = captureCanvas.getContext("2d", {
+    willReadFrequently: true,
+  });
+  const compareCanvas = document.createElement("canvas");
+  const compareCtx = compareCanvas.getContext("2d", {
+    willReadFrequently: true,
+  });
   compareCanvas.width = CAPTURE.compareCanvasSize;
   compareCanvas.height = CAPTURE.compareCanvasSize;
 
   function configureCaptureCanvas() {
     const sourceWidth = previewVideo.videoWidth;
     const sourceHeight = previewVideo.videoHeight;
-    const scale = Math.min(1, CAPTURE.maxFrameDimension / Math.max(sourceWidth, sourceHeight));
+    const scale = Math.min(
+      1,
+      CAPTURE.maxFrameDimension / Math.max(sourceWidth, sourceHeight),
+    );
 
     captureCanvas.width = Math.max(1, Math.round(sourceWidth * scale));
     captureCanvas.height = Math.max(1, Math.round(sourceHeight * scale));
   }
 
   function connectWebSocket() {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    state.ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/presenter?id=${state.sessionId}`);
+    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+    state.ws = new WebSocket(
+      `${wsProtocol}://${window.location.host}/ws/presenter?id=${state.sessionId}`,
+    );
 
     state.ws.onopen = function () {
       setStatus("Ready to share. Click 'Start Sharing Screen'.");
       sessionBadge.textContent = `Session: ${state.sessionId}`;
       startSharingButton.disabled = false;
       stopSharingButton.disabled = true;
-      startNewSessionButton.style.display = 'none';
+      startNewSessionButton.style.display = "none";
     };
 
     state.ws.onclose = function () {
       if (!state.serverAlive) return;
-      setStatus('Session not found or expired. Start a new session to continue.');
-      sessionBadge.textContent = 'Expired';
+      setStatus(
+        "Session not found or expired. Start a new session to continue.",
+      );
+      sessionBadge.textContent = "Expired";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = true;
-      startNewSessionButton.style.display = 'inline-flex';
+      startNewSessionButton.style.display = "inline-flex";
     };
 
     state.ws.onerror = function () {
-      setStatus('Connection error. Check your network and start a new session if needed.');
-      sessionBadge.textContent = 'Connection error';
+      setStatus(
+        "Connection error. Check your network and start a new session if needed.",
+      );
+      sessionBadge.textContent = "Connection error";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = true;
-      startNewSessionButton.style.display = 'inline-flex';
+      startNewSessionButton.style.display = "inline-flex";
     };
   }
 
@@ -103,7 +118,10 @@
     let sum = 0;
 
     for (let i = 0; i < imageData.length; i += 4) {
-      sum += imageData[i] * 0.299 + imageData[i + 1] * 0.587 + imageData[i + 2] * 0.114;
+      sum +=
+        imageData[i] * 0.299 +
+        imageData[i + 1] * 0.587 +
+        imageData[i + 2] * 0.114;
     }
 
     return sum / (CAPTURE.compareCanvasSize * CAPTURE.compareCanvasSize);
@@ -111,12 +129,12 @@
 
   function initialize() {
     const urlParams = new URLSearchParams(window.location.search);
-    state.sessionId = urlParams.get('id') || '';
+    state.sessionId = urlParams.get("id") || "";
 
     if (!state.sessionId) {
-      setStatus('No session ID found. Start from the main page.');
-      sessionBadge.textContent = 'Missing session';
-      startNewSessionButton.style.display = 'inline-flex';
+      setStatus("No session ID found. Start from the main page.");
+      sessionBadge.textContent = "Missing session";
+      startNewSessionButton.style.display = "inline-flex";
       return;
     }
 
@@ -125,13 +143,18 @@
     qrCodeImage.src = `/api/qrcode?data=${encodeURIComponent(joinUrl)}`;
     qrCodeImage.hidden = false;
 
-    setStatus('Connecting presenter session...');
-    sessionBadge.textContent = 'Connecting';
+    setStatus("Connecting presenter session...");
+    sessionBadge.textContent = "Connecting";
     connectWebSocket();
     startServerPing();
 
-    if (!('mediaDevices' in navigator && 'getDisplayMedia' in navigator.mediaDevices)) {
-      setStatus('Screen sharing is only supported in desktop browsers.');
+    if (
+      !(
+        "mediaDevices" in navigator &&
+        "getDisplayMedia" in navigator.mediaDevices
+      )
+    ) {
+      setStatus("Screen sharing is only supported in desktop browsers.");
       startSharingButton.disabled = true;
     }
   }
@@ -143,21 +166,21 @@
     }
 
     joinLinkInput.select();
-    document.execCommand('copy');
+    document.execCommand("copy");
     window.getSelection().removeAllRanges();
   }
 
   async function startScreenSharing() {
-    noPermissionMessage.style.display = 'none';
+    noPermissionMessage.style.display = "none";
 
     try {
       state.mediaStream = await navigator.mediaDevices.getDisplayMedia({
         audio: false,
-        video: { cursor: 'always' },
+        video: { cursor: "always" },
       });
 
       previewVideo.srcObject = state.mediaStream;
-      previewVideo.style.display = 'block';
+      previewVideo.style.display = "block";
 
       await new Promise((resolve) => {
         previewVideo.onloadedmetadata = resolve;
@@ -167,19 +190,24 @@
       configureCaptureCanvas();
       startSendingFramesLoop();
 
-      setStatus('Sharing screen. Audience members will see updates automatically.');
+      setStatus(
+        "Sharing screen. Audience members will see updates automatically.",
+      );
       sessionBadge.textContent = `Live: ${state.sessionId}`;
       startSharingButton.disabled = true;
       stopSharingButton.disabled = false;
-      startNewSessionButton.style.display = 'none';
+      startNewSessionButton.style.display = "none";
 
       state.mediaStream.getTracks().forEach((track) => {
         track.onended = stopPresenting;
       });
     } catch (error) {
-      setStatus('Unable to start screen sharing.');
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        noPermissionMessage.style.display = 'block';
+      setStatus("Unable to start screen sharing.");
+      if (
+        error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError"
+      ) {
+        noPermissionMessage.style.display = "block";
       }
       startSharingButton.disabled = false;
       stopSharingButton.disabled = true;
@@ -205,13 +233,24 @@
       return;
     }
 
-    captureCtx.drawImage(previewVideo, 0, 0, captureCanvas.width, captureCanvas.height);
+    captureCtx.drawImage(
+      previewVideo,
+      0,
+      0,
+      captureCanvas.width,
+      captureCanvas.height,
+    );
 
     const currentAvgPixelIntensity = getAveragePixelIntensity(captureCanvas);
-    const intensityDiff = Math.abs(currentAvgPixelIntensity - state.lastAvgPixelIntensity) / 255;
-    const imageData = captureCanvas.toDataURL(CAPTURE.mimeType, CAPTURE.imageQuality);
+    const intensityDiff =
+      Math.abs(currentAvgPixelIntensity - state.lastAvgPixelIntensity) / 255;
+    const imageData = captureCanvas.toDataURL(
+      CAPTURE.mimeType,
+      CAPTURE.imageQuality,
+    );
     const shouldSendBurst =
-      intensityDiff > CAPTURE.pixelChangeThresholdPercent || !state.firstFrameSent;
+      intensityDiff > CAPTURE.pixelChangeThresholdPercent ||
+      !state.firstFrameSent;
 
     if (shouldSendBurst) {
       sendPresenterMessage({
@@ -258,22 +297,24 @@
   function startServerPing() {
     setInterval(async function () {
       try {
-        const response = await fetch('/healthz', {
-          cache: 'no-store',
-          method: 'HEAD',
+        const response = await fetch("/healthz", {
+          cache: "no-store",
+          method: "HEAD",
         });
-        if (!response.ok) throw new Error('Health check failed');
+        if (!response.ok) throw new Error("Health check failed");
 
         if (!state.serverAlive) window.location.reload();
-      } catch (error) {
+      } catch {
         state.serverAlive = false;
-        setStatus('Server is unavailable. Start a new session when it is back online.');
-        sessionBadge.textContent = 'Server offline';
+        setStatus(
+          "Server is unavailable. Start a new session when it is back online.",
+        );
+        sessionBadge.textContent = "Server offline";
         startSharingButton.disabled = true;
         stopSharingButton.disabled = true;
         copyLinkButton.disabled = true;
         openAudienceButton.disabled = true;
-        startNewSessionButton.style.display = 'inline-flex';
+        startNewSessionButton.style.display = "inline-flex";
       }
     }, 5000);
   }
@@ -290,17 +331,17 @@
     stopSendingFrames();
 
     previewVideo.srcObject = null;
-    previewVideo.style.display = 'none';
+    previewVideo.style.display = "none";
     state.firstFrameSent = false;
     state.lastAvgPixelIntensity = 0;
 
     sendPresenterMessage({ type: MESSAGE_TYPES.AWAITING });
 
-    setStatus('Screen sharing stopped. You can select a new screen to share.');
+    setStatus("Screen sharing stopped. You can select a new screen to share.");
     sessionBadge.textContent = `Session: ${state.sessionId}`;
     startSharingButton.disabled = false;
     stopSharingButton.disabled = true;
-    startNewSessionButton.style.display = 'inline-flex';
+    startNewSessionButton.style.display = "inline-flex";
   }
 
   function stopSendingFrames() {
@@ -315,26 +356,26 @@
     }
   }
 
-  copyLinkButton.addEventListener('click', async function () {
+  copyLinkButton.addEventListener("click", async function () {
     try {
       await copyText(joinLinkInput.value);
-      copyLinkButton.textContent = 'Copied';
+      copyLinkButton.textContent = "Copied";
       setTimeout(function () {
-        copyLinkButton.textContent = 'Copy';
+        copyLinkButton.textContent = "Copy";
       }, 1200);
-    } catch (error) {
-      setStatus('Could not copy the link. Select and copy it manually.');
+    } catch {
+      setStatus("Could not copy the link. Select and copy it manually.");
     }
   });
 
-  openAudienceButton.addEventListener('click', function () {
-    window.open(joinLinkInput.value, '_blank', 'noopener');
+  openAudienceButton.addEventListener("click", function () {
+    window.open(joinLinkInput.value, "_blank", "noopener");
   });
 
-  startSharingButton.addEventListener('click', startScreenSharing);
-  stopSharingButton.addEventListener('click', stopPresenting);
-  startNewSessionButton.addEventListener('click', function () {
-    window.location.href = '/presenter';
+  startSharingButton.addEventListener("click", startScreenSharing);
+  stopSharingButton.addEventListener("click", stopPresenting);
+  startNewSessionButton.addEventListener("click", function () {
+    window.location.href = "/presenter";
   });
 
   initialize();

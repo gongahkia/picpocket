@@ -1,6 +1,6 @@
-const { colors, uniqueNamesGenerator } = require('unique-names-generator');
+const { colors, uniqueNamesGenerator } = require("unique-names-generator");
 
-const customWords = require('../words');
+const customWords = require("../words");
 
 const SESSION_ID_PATTERN = /^[a-z]+-[a-z]+$/;
 
@@ -15,14 +15,14 @@ function createSessionStore({ now = () => Date.now() } = {}) {
       sessionId = uniqueNamesGenerator({
         dictionaries: [colors, customWords],
         length: 2,
-        separator: '-',
-        style: 'lowerCase',
+        separator: "-",
+        style: "lowerCase",
       });
       attempts += 1;
     } while (sessions.has(sessionId) && attempts < 100);
 
     if (sessions.has(sessionId)) {
-      throw new Error('Unable to create a unique session ID');
+      throw new Error("Unable to create a unique session ID");
     }
 
     const session = {
@@ -59,7 +59,7 @@ function createSessionStore({ now = () => Date.now() } = {}) {
   }
 
   function isValidSessionId(sessionId) {
-    return typeof sessionId === 'string' && SESSION_ID_PATTERN.test(sessionId);
+    return typeof sessionId === "string" && SESSION_ID_PATTERN.test(sessionId);
   }
 
   return {
