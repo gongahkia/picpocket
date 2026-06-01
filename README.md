@@ -7,7 +7,7 @@
 
 # `PicPocket`
 
-[Share Screen](https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060596) for [IRL](https://dictionary.cambridge.org/dictionary/english/irl) presentations
+[Share Screen](https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060596) for [IRL](https://dictionary.cambridge.org/dictionary/english/irl) presentations.
 
 <div align="center">
   <img src="./asset/see.jpeg" width="50%" alt="Person looking at a presentation" />
@@ -57,7 +57,7 @@ sequenceDiagram
 
 ## API Surface
 
-HTTP:
+### HTTP
 
 - `GET /`
 - `GET /presenter`
@@ -66,12 +66,12 @@ HTTP:
 - `GET /api/qrcode?data=:url`
 - `POST /api/save-image`
 
-WebSocket:
+### WebSocket
 
 - `/ws/presenter?id=:sessionId&token=:presenterToken`
 - `/ws/audience?id=:sessionId`
 
-## Presenter messages
+### Presenter messages
 
 ```json
 {
@@ -85,7 +85,7 @@ WebSocket:
 { "type": "awaiting" }
 ```
 
-## Server lifecycle message
+### Server lifecycle message
 
 ```json
 {
