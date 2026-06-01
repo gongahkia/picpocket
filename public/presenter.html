@@ -3,744 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PicPocket (Presenter Dashboard)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>PicPocket Presenter</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --accent: #22c55e;
+            --accent: #16a34a;
             --accent-dark: #15803d;
-            --danger: #dc3545;
-            --danger-dark: #b91c1c;
-            --bg-light: #f3f6fa;
-            --container-bg: #fff;
-            --shadow: 0 6px 32px 0 rgba(30,64,175,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.03);
-            --radius: 18px;
-            --transition: 0.25s cubic-bezier(.4,0,.2,1);
+            --bg: #eef2f7;
+            --danger: #dc2626;
+            --danger-dark: #991b1b;
+            --ink: #172033;
+            --muted: #5f6c80;
+            --panel: #ffffff;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --ring: #c8d8f8;
+            --shadow: 0 18px 48px rgba(31, 41, 55, 0.12);
         }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
+
+        * {
+            box-sizing: border-box;
         }
-        .center-text {
-            text-align: center;
-        }
+
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #e0e7ff 0%, #f0f2f5 100%);
-            font-family: 'Inter', Arial, sans-serif;
-            color: #222;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            display: grid;
+            place-items: center;
+            padding: 28px;
         }
-        .container {
-            background: var(--container-bg);
-            border-radius: var(--radius);
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        .shell {
+            width: min(960px, 100%);
+            background: var(--panel);
+            border: 1px solid #d8e1ee;
+            border-radius: 14px;
             box-shadow: var(--shadow);
-            padding: 38px 32px 32px 32px;
-            max-width: 700px;
-            width: 98vw;
-            margin: 0 auto;
+            padding: clamp(20px, 4vw, 36px);
+        }
+
+        .header {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 24px;
         }
-        .container::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: var(--radius);
-            background: linear-gradient(120deg, #c7d2fe 0%, #f0f2f5 100%);
-            opacity: 0.13;
-            z-index: 0;
-        }
+
         h1 {
-            color: var(--primary);
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
-            position: relative;
-            z-index: 1;
+            font-size: clamp(1.7rem, 3vw, 2.35rem);
+            line-height: 1.05;
+            margin: 0 0 10px;
         }
+
         #status {
-            margin: 16px 0 12px 0;
-            font-size: 1.08em;
-            font-weight: 500;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--ring);
+            border-radius: 999px;
             color: var(--primary-dark);
-            letter-spacing: 0.01em;
-            background: #e0e7ff;
-            border-radius: 8px;
-            padding: 8px 16px;
-            display: inline-block;
-            box-shadow: 0 1px 4px 0 rgba(30,64,175,0.07);
-            position: relative;
-            z-index: 1;
+            background: #f8fbff;
+            min-height: 38px;
+            padding: 7px 13px;
+            white-space: nowrap;
         }
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+
+        .preview {
             width: 100%;
-            z-index: 1;
-        }
-        #previewVideo {
+            aspect-ratio: 16 / 9;
+            border-radius: 10px;
+            border: 1px solid #cfd9e8;
+            background: #111827;
+            object-fit: contain;
             display: none;
-            width: 100%;
-            max-width: 540px;
-            min-height: 240px;
-            aspect-ratio: 16/9;
-            border: 2px solid #e0e7ff;
-            margin: 0 auto 24px auto;
-            background-color: #000;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
-            z-index: 1;
+            margin: 0 0 22px;
         }
-        .share-row {
+
+        .controls {
             display: flex;
-            flex-direction: row;      /* horizontal layout */
-            align-items: center;  
-            justify-content: center;
-            gap: 32px;                /* space between QR and link */
-            width: 100%;
-            margin-top: 20px;
-            margin-bottom: 0;
-            z-index: 1;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
         }
-        .qr-section, .link-section {
-            width: auto;
-            min-width: unset;
-            align-items: center;
-            justify-content: center;
-            display: flex;
-            flex-direction: column;
-        }
-        #openAudienceButton {
-            padding: 8px 18px;
-            font-size: 1em;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, #868686, rgb(5, 33, 38));
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
-            outline: none;
-            letter-spacing: 0.01em;
-            box-shadow: 0 2px 8px 0 rgba(37,99,235,0.06);
-            margin-left: 8px;
-        }
-        #openAudienceButton:hover {
-            background: linear-gradient(90deg, #1e40af, #15803d);
-            transform: translateY(-2px) scale(1.03);
-        }
-        #qrCode {
-            border: 1.5px solid #e0e7ff;
-            padding: 13px;
-            background: #f8fafc;
-            border-radius: 12px;
-            display: inline-block;
-            box-shadow: 0 2px 12px 0 rgba(37,99,235,0.06);
-        }
-        .or-label {
-            font-size: 1.05em;
-            color: #64748b;
-            margin: 6px 0 0 0;
-            font-weight: 500;
-        }
-        .link-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 5vw;   /* Scales with viewport width */
-            width: 100%;
-            word-break: break-all;
-        }
-        .copy-link-label {
-            font-size: 1em;
-            color: #64748b;
-            margin-bottom: 6px;
-        }
-        .copy-link-row {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            max-width: 100%;
-        }
-        .copy-link-buttons {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-            justify-content: center;
-            width: 100%;
-        }
-        #joinLinkInput {
-            font-size: 1em;
-            padding: 8px 12px;
-            border: 1.5px solid #e0e7ff;
-            border-radius: 7px;
-            background: #f8fafc;
-            color: #222;
-            width: auto;
-            min-width: 80px;
-            max-width: 100%;
-            font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
-            outline: none;
-            box-sizing: border-box;
-            text-align: center;
-            display: inline-block;
-        }
-        #copyLinkButton {
-            padding: 8px 18px;
-            font-size: 1em;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
-            outline: none;
-            letter-spacing: 0.01em;
-            box-shadow: 0 2px 8px 0 rgba(37,99,235,0.06);
-        }
-        #copyLinkButton.copied {
-            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
-        }
-        .buttons-group {
-            display: flex;
-            justify-content: center;
-            margin: 5px 0 0 0;
-            gap: 18px;
-            position: relative;
-            z-index: 1;
-            width: 100%;
-        }
-        .buttons-group button {
-            padding: 14px 32px;
-            font-size: 1.12em;
-            font-weight: 600;
-            border: none;
+
+        .button {
+            border: 0;
             border-radius: 8px;
+            color: #ffffff;
             cursor: pointer;
-            transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
-            outline: none;
-            letter-spacing: 0.01em;
-            box-shadow: 0 2px 8px 0 rgba(37,99,235,0.06);
+            font-weight: 700;
+            min-height: 44px;
+            padding: 0 18px;
+            transition: transform 0.16s ease, background 0.16s ease, opacity 0.16s ease;
         }
-        #startSharingButton {
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            color: #fff;
+
+        .button:hover:not(:disabled) {
+            transform: translateY(-1px);
         }
-        #startSharingButton:hover:not(:disabled) {
-            background: linear-gradient(90deg, var(--accent-dark), var(--primary-dark));
-            transform: translateY(-2px) scale(1.03);
-        }
-        #startSharingButton:disabled {
-            background: #d1d5db;
-            color: #a1a1aa;
+
+        .button:disabled {
             cursor: not-allowed;
+            opacity: 0.48;
         }
-        #stopSharingButton {
-            background: linear-gradient(90deg, var(--danger), var(--primary));
-            color: #fff;
+
+        .button-primary {
+            background: var(--primary);
         }
-        #stopSharingButton:hover:not(:disabled) {
-            background: linear-gradient(90deg, var(--danger-dark), var(--primary-dark));
-            transform: translateY(-2px) scale(1.03);
+
+        .button-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
         }
-        #stopSharingButton:disabled {
-            background: #d1d5db;
-            color: #a1a1aa;
-            cursor: not-allowed;
+
+        .button-accent {
+            background: var(--accent);
         }
-        #startNewSessionButton {
+
+        .button-accent:hover:not(:disabled) {
+            background: var(--accent-dark);
+        }
+
+        .button-danger {
+            background: var(--danger);
+        }
+
+        .button-danger:hover:not(:disabled) {
+            background: var(--danger-dark);
+        }
+
+        .button-secondary {
             background: #64748b;
-            color: #fff;
-            font-size: 1.08em;
-            font-weight: 600;
-            border-radius: 8px;
+        }
+
+        .share-grid {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 24px;
+            align-items: center;
+            border-top: 1px solid #e4ebf4;
+            padding-top: 24px;
+        }
+
+        .qr-card {
+            display: grid;
+            gap: 10px;
+            justify-items: center;
+            color: var(--muted);
+        }
+
+        .qr-frame {
+            display: grid;
+            place-items: center;
+            width: 210px;
+            height: 210px;
+            border: 1px solid #d6dfed;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        #qrCodeImage {
+            width: 180px;
+            height: 180px;
+        }
+
+        .link-tools {
+            min-width: 0;
+        }
+
+        .link-tools label {
+            color: var(--muted);
             display: block;
-            transition: background var(--transition), transform var(--transition);
+            margin-bottom: 8px;
         }
-        #startNewSessionButton:hover {
-            background: #475569;
-            transform: translateY(-1px) scale(1.02);
+
+        .copy-row {
+            display: flex;
+            gap: 10px;
+            min-width: 0;
         }
+
+        #joinLinkInput {
+            flex: 1;
+            min-width: 0;
+            border: 1px solid #cfd9e8;
+            border-radius: 8px;
+            color: var(--ink);
+            padding: 0 12px;
+            height: 44px;
+        }
+
         #noPermissionMessage {
             color: var(--danger);
-            margin-top: 30px;
-            font-size: 1.05em;
             display: none;
-            position: relative;
-            z-index: 1;
+            font-weight: 700;
+            margin: -8px 0 18px;
         }
-        @media (max-width: 900px) {
-            .container {
-                max-width: 99vw;
-                padding: 18px 2vw 18px 2vw;
+
+        @media (max-width: 720px) {
+            body {
+                padding: 14px;
             }
-            #previewVideo {
-                max-width: 97vw;
-            }
-            .share-row {
+
+            .header,
+            .share-grid,
+            .copy-row {
+                grid-template-columns: 1fr;
                 flex-direction: column;
-                gap: 18px;
-                align-items: center;
+                align-items: stretch;
             }
-            .link-section, .qr-section {
-                align-items: center;
-                width: 100%;
-                min-width: unset;
-                max-width: 99vw;
+
+            .status-pill {
+                white-space: normal;
             }
-            .copy-link-row {
-                width: 100%;
-                max-width: 99vw;
-            }
+
+            .button,
             #joinLinkInput {
-                max-width: 99vw;
+                width: 100%;
             }
         }
     </style>
+    <script defer src="/js/presenter.js"></script>
 </head>
-
-<!-- <div id="fpsCounter" style="position:absolute;top:12px;right:18px;background:rgba(0,0,0,0.55);color:#fff;padding:4px 12px;border-radius:8px;font-size:1em;z-index:10;pointer-events:none;"></div> -->
-
 <body>
-    <div class="container">
-        <h1>Presenter Dashboard</h1>
-        <div id="status" class="center-text">Loading...</div>
-        <div class="main-content">
-            <video id="previewVideo" autoplay muted></video>
-            <div class="buttons-group">
-                <button id="startSharingButton" disabled>Start Sharing Screen</button>
-                <button id="stopSharingButton" disabled>Stop Sharing</button>
-                <button id="startNewSessionButton">
-                    <i class="fas fa-rotate-right"></i> Start New Session
-                </button>
+    <main class="shell">
+        <header class="header">
+            <div>
+                <h1>Presenter Dashboard</h1>
+                <p id="status">Loading session...</p>
             </div>
-            <p id="noPermissionMessage">Permission denied - please allow screen sharing.</p>
-            <div class="share-row">
-                <div class="qr-section">
-                    <div id="qrCode"></div>
-                    <div class="qr-desc" style="margin-top:5px; color:#64748b; font-size:1.05em; text-align:center;">
-                        Scan this QR code to join 😎
-                    </div>
+            <div id="sessionBadge" class="status-pill">Connecting</div>
+        </header>
+
+        <video id="previewVideo" class="preview" autoplay muted playsinline></video>
+
+        <div class="controls">
+            <button id="startSharingButton" class="button button-accent" disabled>Start Sharing Screen</button>
+            <button id="stopSharingButton" class="button button-danger" disabled>Stop Sharing</button>
+            <button id="startNewSessionButton" class="button button-secondary">Start New Session</button>
+        </div>
+
+        <p id="noPermissionMessage">Permission denied. Please allow screen sharing.</p>
+
+        <section class="share-grid" aria-label="Audience join information">
+            <div class="qr-card">
+                <div class="qr-frame">
+                    <img id="qrCodeImage" alt="QR code for audience join link">
                 </div>
-                <div class="link-section">
-                    <div class="copy-link-label">...or share this link with your audience:</div>
-                    <div class="copy-link-row">
-                        <input id="joinLinkInput" type="text" readonly value="">
-                        <span id="joinLinkMirror" style="visibility:hidden;position:absolute;white-space:pre;font-family:'Fira Mono','Consolas','Menlo',monospace;font-size:1em;"></span>
-                        <div class="copy-link-buttons">
-                            <button id="copyLinkButton" type="button">Copy</button>
-                            <button id="openAudienceButton" type="button">
-                                Open <i class="fa-solid fa-arrow-up-right-from-square"></i> 
-                            </button>
-                        </div>
-                    </div>
-                        </button>
-                    </div>
+                <span>Scan to join</span>
+            </div>
+
+            <div class="link-tools">
+                <label for="joinLinkInput">Audience link</label>
+                <div class="copy-row">
+                    <input id="joinLinkInput" type="text" readonly>
+                    <button id="copyLinkButton" class="button button-primary" type="button">Copy</button>
+                    <button id="openAudienceButton" class="button button-secondary" type="button">Open</button>
                 </div>
             </div>
-        </div>            
-     </div>
-    </div>
-    <script>
-        let serverAlive = true;
-        const SERVER_PING_INTERVAL_MS = 5000; // 5 seconds
-
-        function setServerDownUI() {
-            serverAlive = false;
-            statusDiv.textContent = "Server is unavailable. Please close this tab and start a new session later.";
-            startSharingButton.disabled = true;
-            stopSharingButton.disabled = true;
-            copyLinkButton.disabled = true;
-            openAudienceButton.disabled = true;
-            startNewSessionButton.style.display = 'block';
-            // Optionally, visually dim or hide other UI elements
-        }
-
-        // Periodically ping the server to check if it's alive
-        function startServerPing() {
-            setInterval(async () => {
-                try {
-                    // Use a lightweight endpoint, e.g., /health or /
-                    const res = await fetch("/", { method: "HEAD", cache: "no-store" });
-                    if (!res.ok) throw new Error("Server not OK");
-                    if (!serverAlive) {
-                        // Server came back, reload to restore UI
-                        window.location.reload();
-                    }
-                } catch (e) {
-                    if (serverAlive) setServerDownUI();
-                }
-            }, SERVER_PING_INTERVAL_MS);
-        }
-
-
-
-        if (!('mediaDevices' in navigator && 'getDisplayMedia' in navigator.mediaDevices)) {
-            alert('Screen sharing is only supported on desktop browsers. Please use a laptop or desktop.');
-            document.getElementById('startSharingButton').disabled = true;
-        }
-        const statusDiv = document.getElementById('status');
-        const qrCodeDiv = document.getElementById('qrCode');
-        const startSharingButton = document.getElementById('startSharingButton');
-        const stopSharingButton = document.getElementById('stopSharingButton');
-        const startNewSessionButton = document.getElementById('startNewSessionButton');
-        const previewVideo = document.getElementById('previewVideo');
-        const noPermissionMessage = document.getElementById('noPermissionMessage');
-        const joinLinkInput = document.getElementById('joinLinkInput');
-        const copyLinkButton = document.getElementById('copyLinkButton');
-        const input = document.getElementById('joinLinkInput');
-        const mirror = document.getElementById('joinLinkMirror');
-
-        function resizeInput() {
-        mirror.textContent = input.value || input.placeholder || '';
-        input.style.width = (mirror.offsetWidth + 50) + 'px'; //padding
-        }
-
-        // Initial resize
-        resizeInput();
-
-        // Resize on input
-        input.addEventListener('input', resizeInput);
-
-
-        const openAudienceButton = document.getElementById('openAudienceButton');
-        openAudienceButton.addEventListener('click', () => {
-            const url = joinLinkInput.value;
-            window.open(url, '_blank', 'noopener');
-        });
-
-
-        // --- Core Variables for Screen Sharing ---
-        let ws;
-        let sessionId;
-        let mediaStream; // To hold the screen share stream
-
-        // Main canvas for capturing full-res image data
-        const captureCanvas = document.createElement('canvas');
-        const ctx = captureCanvas.getContext('2d');
-
-        // define fps
-        const LOW_FPS = 1;
-        const HIGH_FPS = 10;
-        const BURST_DURATION_MS = 2000;
-        let currentFps = LOW_FPS;
-        let burstTimeout = null;
-
-        let framesSent = 0;
-        let lastFpsUpdate = Date.now();
-        const fpsCounterDiv = document.getElementById('fpsCounter');
-
-        // Small canvas for efficient change detection (average pixel intensity)
-        const COMPARE_CANVAS_SIZE = 16; // e.g., 16x16 pixels
-        const compareCanvas = document.createElement('canvas');
-        const compareCtx = compareCanvas.getContext('2d');
-        compareCanvas.width = COMPARE_CANVAS_SIZE;
-        compareCanvas.height = COMPARE_CANVAS_SIZE;
-
-        // --- Configuration for Sending & Quality ---
-        const QUALITY = 0.7; // JPEG quality (0.0 to 1.0). 0.7-0.8 is usually a good balance.
-        const SEND_INTERVAL_MS = 50; // Send a frame every 100ms (aim for ~10 FPS). Adjust as needed.
-
-        // --- Change Detection Variables ---
-        let lastAvgPixelIntensity = 0;
-        const PIXEL_CHANGE_THRESHOLD_PERCENT = 0.01; // 5% change in average pixel intensity (0.0 to 1.0 range)
-        let sendIntervalId = null; // To hold the setInterval ID for sending frames
-
-        // --- Helper Functions ---
-
-        // Calculates the average pixel intensity (luminance) of a canvas
-        function getAveragePixelIntensity(sourceCanvas) {
-            // Draw a downscaled version of the sourceCanvas onto the compareCanvas
-            compareCtx.drawImage(sourceCanvas, 0, 0, COMPARE_CANVAS_SIZE, COMPARE_CANVAS_SIZE);
-            const imageData = compareCtx.getImageData(0, 0, COMPARE_CANVAS_SIZE, COMPARE_CANVAS_SIZE).data;
-
-            let sum = 0;
-            // Iterate over pixel data, calculating luminance (R*0.299 + G*0.587 + B*0.114)
-            for (let i = 0; i < imageData.length; i += 4) { // R, G, B, A
-                sum += imageData[i] * 0.299 + imageData[i+1] * 0.587 + imageData[i+2] * 0.114;
-            }
-            return sum / (COMPARE_CANVAS_SIZE * COMPARE_CANVAS_SIZE);
-        }
-
-        // --- Screen Sharing and Sending Logic ---
-
-        async function startScreenSharing() {
-            noPermissionMessage.style.display = 'none';
-            try {
-                mediaStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "always" },
-                    audio: false
-                });
-
-                previewVideo.srcObject = mediaStream;
-                previewVideo.style.display = 'block';
-
-                // Wait for video metadata to load
-                await new Promise(resolve => previewVideo.onloadedmetadata = resolve);
-
-                // Wait for the first video frame to be painted
-                await new Promise(resolve => {
-                    if (previewVideo.readyState >= 2) {
-                        resolve();
-                    } else {
-                        previewVideo.onplaying = resolve;
-                    }
-                });
-
-                captureCanvas.width = previewVideo.videoWidth;
-                captureCanvas.height = previewVideo.videoHeight;
-
-                startSendingFramesLoop();
-                statusDiv.textContent = `Session ID: ${sessionId} | Sharing screen...`;
-                startSharingButton.disabled = true;
-                stopSharingButton.disabled = false;
-                startNewSessionButton.style.display = 'none';
-
-                mediaStream.getTracks().forEach(track => {
-                    track.onended = () => {
-                        console.log('Screen sharing ended by user via browser UI.');
-                        stopPresenting();
-                    };
-                });
-
-            } catch (error) {
-                console.error('Error starting screen sharing:', error);
-                statusDiv.textContent = 'Error starting screen sharing.';
-                if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-                    noPermissionMessage.style.display = 'block';
-                }
-                startSharingButton.disabled = false;
-                stopSharingButton.disabled = true;
-                // startNewSessionButton.style.display = 'block'; // Show new session button on error
-            }
-        }
-        function setSendFps(fps) {
-            if (currentFps === fps) return;
-            currentFps = fps;
-            if (sendIntervalId) clearInterval(sendIntervalId);
-            sendIntervalId = setInterval(sendFrame, 1000 / currentFps);
-        }
-
-        let firstFrameSent = false;
-
-        function sendFrame() {
-            console.log("sendFrame called");
-            if (!mediaStream || mediaStream.ended || !ws || ws.readyState !== WebSocket.OPEN) {
-                if (sendIntervalId) clearInterval(sendIntervalId);
-                sendIntervalId = null;
-                return;
-            }
-
-            ctx.drawImage(previewVideo, 0, 0, captureCanvas.width, captureCanvas.height);
-            const currentAvgPixelIntensity = getAveragePixelIntensity(captureCanvas);
-            const intensityDiff = Math.abs(currentAvgPixelIntensity - lastAvgPixelIntensity) / 255;
-
-            console.log("intensityDiff:", intensityDiff, "lastAvgPixelIntensity:", lastAvgPixelIntensity);
-
-            // --- WebP or JPEG encoding ---
-            let currentImageDataURL;
-            currentImageDataURL = captureCanvas.toDataURL('image/png');
-
-            if (intensityDiff > PIXEL_CHANGE_THRESHOLD_PERCENT || !firstFrameSent) {
-                console.log("Sending image to server", currentImageDataURL.slice(0, 30));
-                ws.send(currentImageDataURL);
-                lastAvgPixelIntensity = currentAvgPixelIntensity;
-                firstFrameSent = true;
-
-                // Switch to high FPS on change
-                if (currentFps !== HIGH_FPS) setSendFps(HIGH_FPS);
-
-                // Reset burst timer
-                if (burstTimeout) clearTimeout(burstTimeout);
-                burstTimeout = setTimeout(() => setSendFps(LOW_FPS), BURST_DURATION_MS);
-            } else if (currentFps === LOW_FPS) {
-                // Still send at low FPS to keep audience in sync
-                console.log("Sending low-FPS image", currentImageDataURL.slice(0, 30));
-                ws.send(currentImageDataURL);
-            }
-            framesSent++;
-            const now = Date.now();
-            if (now - lastFpsUpdate >= 1000) {
-                fpsCounterDiv.textContent = `FPS: ${framesSent}`;
-                framesSent = 0;
-                lastFpsUpdate = now;
-            }
-        }
-
-        function startSendingFramesLoop() {
-            setSendFps(LOW_FPS);
-            
-            // Wait for two animation frames to ensure the video is painted
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    sendFrame();
-                });
-            });
-        }
-
-        function stopPresenting() {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
-                previewVideo.srcObject = null;
-                previewVideo.style.display = 'none';
-            }
-            if (sendIntervalId) {
-                clearInterval(sendIntervalId);
-                sendIntervalId = null;
-            }
-            
-            // Notify audience to show "awaiting" screen
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: "awaiting" }));
-            }
-            statusDiv.textContent = 'Screen sharing stopped. You may select a new screen to share.';
-            startSharingButton.disabled = false; // Allow starting sharing again
-            stopSharingButton.disabled = true;
-            startNewSessionButton.style.display = 'block'; // Optionally show new session button
-            lastAvgPixelIntensity = 0;
-        }
-
-        // --- Initialization ---
-        async function initializePresenter() {
-            const urlParams = new URLSearchParams(window.location.search);
-            sessionId = urlParams.get('id');
-
-            if (!sessionId) {
-                statusDiv.textContent = 'Error: No session ID found in URL. Please start from the main page.';
-                startNewSessionButton.style.display = 'block'; // Allow starting new session if ID missing
-                return;
-            }
-
-            // Generate QR code with the audience join URL
-            const joinUrl = `${window.location.origin}/join/${sessionId}`;
-            
-            new QRCode(qrCodeDiv, {
-                text: joinUrl,
-                width: 180,
-                height: 180,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            // Set the join URL in the input for copying
-            joinLinkInput.value = joinUrl;
-            resizeInput();
-            statusDiv.textContent = `Session ID: ${sessionId} | Connecting...`;
-
-            // WebSocket connection to your server
-            const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-            ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/presenter?id=${sessionId}`);
-
-            ws.onopen = () => {
-                statusDiv.innerHTML = `Ready to Share Screen. Click 'Start Sharing'.`;
-                console.log('Presenter WebSocket connected.');
-                console.log('Session ID:', sessionId); // Log session ID to console only
-                startSharingButton.disabled = false;
-                stopSharingButton.disabled = true;
-                startNewSessionButton.style.display = 'none'; // Ensure hidden on successful connect
-            };
-
-            ws.onclose = () => {
-                if (!serverAlive) return; // Already handled by server ping
-                // Show a clear error and only the start new session button
-                document.querySelector('.container').innerHTML = `
-                    <h1 style="text-align:center;">Presenter Dashboard</h1>
-                    <div style="
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 300px;
-                    ">
-                        <div id="status" class="center-text" style="margin-bottom:32px;">
-                            <span style="font-size:1.2em;color:#dc3545;">Session not found or expired.<br>Please start a new session.</span>
-                        </div>
-                        <button id="startNewSessionButton"
-                            style="
-                                background: linear-gradient(90deg, #22c55e, #2563eb);
-                                color: #fff;
-                                font-size: 1.35em;
-                                font-weight: 700;
-                                border-radius: 14px;
-                                box-shadow: 0 4px 16px 0 rgba(37,99,235,0.13);
-                                padding: 26px 60px;
-                                margin-top: 40px;
-                                border: none;
-                                cursor: pointer;
-                                transition: background 0.2s, transform 0.2s;
-                                z-index: 10;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            ">
-                            <i class="fas fa-rotate-right" style="margin-right: 10px;"></i> Start New Session
-                        </button>
-                    </div>
-                `;
-                document.getElementById('startNewSessionButton').onclick = () => {
-                    window.location.href = '/presenter';
-                };
-            };
-
-            ws.onerror = (error) => {
-                statusDiv.textContent = 'Connection error. Check console and your network.';
-                console.error('Presenter WebSocket error:', error);
-                startSharingButton.disabled = true;
-                stopSharingButton.disabled = true;
-                startNewSessionButton.style.display = 'block'; // Show new session button on error
-            };
-
-            // Presenter doesn't receive messages from audience in this design,
-            // but could receive control messages from the server if implemented.
-            ws.onmessage = event => {
-                console.log('Message from server for presenter:', event.data);
-            };
-        }
-
-        // --- Copy to Clipboard Logic ---
-        copyLinkButton.addEventListener('click', () => {
-            joinLinkInput.select();
-            joinLinkInput.setSelectionRange(0, 99999); // For mobile devices
-            document.execCommand('copy');
-            copyLinkButton.classList.add('copied');
-            copyLinkButton.textContent = "Copied!";
-            setTimeout(() => {
-                copyLinkButton.classList.remove('copied');
-                copyLinkButton.textContent = "Copy";
-            }, 1200);
-        });
-
-        // --- Event Listeners ---
-        startSharingButton.onclick = startScreenSharing;
-        stopSharingButton.onclick = stopPresenting;
-        startNewSessionButton.onclick = () => {
-            window.location.href = '/presenter'; // Redirect to generate a new session
-        };
-
-        // Initialize when the page loads
-        initializePresenter();
-        startServerPing();
-
-    </script>
+        </section>
+    </main>
 </body>
 </html>
