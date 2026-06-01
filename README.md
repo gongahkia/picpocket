@@ -1,65 +1,32 @@
-# PicPocket
+[![](https://img.shields.io/badge/picpocket_1.0.0-passing-green)](https://github.com/gongahkia/tanabata/releases/tag/1.0.0) 
+![](https://github.com/gongahkia/picpocket/actions/workflows/ci.yml/badge.svg)
+![](https://img.shields.io/badge/picpocket_1.0.0-deployment_down-orange)
 
-PicPocket makes in-person presentations easier to see. A presenter shares their
-screen once, audience members join with a QR code or link, and the current slide
-appears live on each audience device.
+> [!WARNING]  
+> [PicPocket](https://github.com/gongahkia/picpocket)'s Render deployment is inactive as of 1 June 2026.
+
+# `PicPocket`
+
+[Share Screen](https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060596) for [IRL](https://dictionary.cambridge.org/dictionary/english/irl) presentations
 
 <div align="center">
-  <img src="./asset/see.jpeg" width="30%" alt="Person looking at a presentation" />
+  <img src="./asset/see.jpeg" width="50%" alt="Person looking at a presentation" />
 </div>
 
-## Live App
+## What does PicPocket do?
 
-PicPocket is deployed at [picpocket.onrender.com](https://picpocket.onrender.com/).
+A presenter shares their screen once, audience members join with a QR code or link, and the current slide appears live on each audience device.
+
 
 ## Features
 
-- Presenter sessions with readable two-word IDs.
-- Cryptographic presenter tokens so audience links cannot publish frames.
-- QR code and copyable audience join link.
-- Live frame relay over WebSockets.
-- Late audience joiners receive the latest frame.
-- Audience zoom, pan, share-link, and save controls.
-- Server-side PNG save fallback using Sharp.
-- Health check, automated tests, linting, formatting, and CI.
-
-## Local Development
-
-```bash
-npm ci
-npm start
-```
-
-Open `http://localhost:3000/presenter` to start a presentation.
-
-Useful commands:
-
-```bash
-npm run lint
-npm run format:check
-npm test
-npm run test:e2e
-npm run audit
-```
-
-For Playwright smoke tests, install a browser first:
-
-```bash
-npx playwright install chromium
-```
-
-## Configuration
-
-Copy `.env.example` if you need local overrides.
-
-| Variable                   | Default   | Purpose                                     |
-| -------------------------- | --------- | ------------------------------------------- |
-| `PORT`                     | `3000`    | HTTP port                                   |
-| `DEBUG`                    | `false`   | Enables debug logs                          |
-| `JSON_BODY_LIMIT`          | `10mb`    | Max JSON request body size                  |
-| `MAX_AUDIENCE_PER_SESSION` | `250`     | Audience WebSocket cap per session          |
-| `SESSION_TTL_MS`           | `7200000` | Session lifetime for newly created sessions |
-| `WS_MAX_PAYLOAD_BYTES`     | `6291456` | Max WebSocket message size                  |
+* Presenter sessions with readable two-word IDs
+* Cryptographic presenter tokens so audience links cannot publish frames
+* QR code and copyable audience join link
+* Live frame relay
+* Late audience joiners receive the latest frame
+* Audience zoom, pan and share-link
+* Server-side PNG saves
 
 ## Architecture
 
@@ -89,15 +56,6 @@ sequenceDiagram
     Server->>Audience: { type: "disconnected" }
 ```
 
-The server is intentionally small:
-
-- `server.js` wires the HTTP server and WebSocket server.
-- `src/app.js` owns Express routes and static assets.
-- `src/websocket.js` owns session WebSocket behavior.
-- `src/sessionStore.js` owns in-memory session state.
-- `src/imageService.js` owns image parsing/compression.
-- `public/js` owns presenter and audience browser behavior.
-
 ## API Surface
 
 HTTP:
@@ -114,7 +72,7 @@ WebSocket:
 - `/ws/presenter?id=:sessionId&token=:presenterToken`
 - `/ws/audience?id=:sessionId`
 
-Presenter messages:
+## Presenter messages
 
 ```json
 {
@@ -128,7 +86,7 @@ Presenter messages:
 { "type": "awaiting" }
 ```
 
-Server lifecycle message:
+## Server lifecycle message
 
 ```json
 {
@@ -136,22 +94,6 @@ Server lifecycle message:
   "message": "Presenter disconnected. Presentation ended."
 }
 ```
-
-## Production Notes
-
-Sessions are stored in memory. That keeps the app simple and works for a
-single-instance deployment, but multi-instance hosting needs sticky sessions or
-a shared relay such as Redis pub/sub.
-
-Readable two-word session IDs are audience aliases, not presenter secrets. The
-presenter route also receives a 256-bit random token, and the server requires
-that token before accepting presenter WebSocket messages.
-The audience join URL is still shareable by design and should not be treated as
-access control for confidential presentations.
-
-Screen frames are sent as compressed image data URLs. This is simple and
-portable, but it is not a replacement for WebRTC when low-latency video-scale
-streaming is required.
 
 ## Contributors
 
