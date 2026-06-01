@@ -11,7 +11,9 @@ test("presenter can create a session and audience can open the waiting view", as
   ).toBeVisible();
   await page.getByRole("link", { name: "Start Presenting" }).click();
 
-  await expect(page).toHaveURL(/\/presenter\.html\?id=[a-z]+-[a-z]+$/);
+  await expect(page).toHaveURL(
+    /\/presenter\.html\?id=[a-z]+-[a-z]+&token=[A-Za-z0-9_-]{43}$/,
+  );
   await expect(
     page.getByRole("heading", { name: "Presenter Dashboard" }),
   ).toBeVisible();

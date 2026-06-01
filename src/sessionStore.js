@@ -83,7 +83,8 @@ function createSessionStore({
     const actual = Buffer.from(presenterToken);
 
     return (
-      expected.length === actual.length && crypto.timingSafeEqual(expected, actual)
+      expected.length === actual.length &&
+      crypto.timingSafeEqual(expected, actual)
     );
   }
 

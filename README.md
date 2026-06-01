@@ -15,6 +15,7 @@ PicPocket is deployed at [picpocket.onrender.com](https://picpocket.onrender.com
 ## Features
 
 - Presenter sessions with readable two-word IDs.
+- Cryptographic presenter tokens so audience links cannot publish frames.
 - QR code and copyable audience join link.
 - Live frame relay over WebSockets.
 - Late audience joiners receive the latest frame.
@@ -69,8 +70,8 @@ sequenceDiagram
     actor Audience as Audience
 
     Presenter->>Server: GET /presenter
-    Server->>Presenter: Redirect /presenter.html?id=:sessionId
-    Presenter->>Server: WS /ws/presenter?id=:sessionId
+    Server->>Presenter: Redirect /presenter.html?id=:sessionId&token=:presenterToken
+    Presenter->>Server: WS /ws/presenter?id=:sessionId&token=:presenterToken
 
     Audience->>Server: GET /join/:sessionId
     Server->>Audience: Serve audience.html
@@ -110,7 +111,7 @@ HTTP:
 
 WebSocket:
 
-- `/ws/presenter?id=:sessionId`
+- `/ws/presenter?id=:sessionId&token=:presenterToken`
 - `/ws/audience?id=:sessionId`
 
 Presenter messages:
@@ -141,6 +142,12 @@ Server lifecycle message:
 Sessions are stored in memory. That keeps the app simple and works for a
 single-instance deployment, but multi-instance hosting needs sticky sessions or
 a shared relay such as Redis pub/sub.
+
+Readable two-word session IDs are audience aliases, not presenter secrets. The
+presenter route also receives a 256-bit random token, and the server requires
+that token before accepting presenter WebSocket messages.
+The audience join URL is still shareable by design and should not be treated as
+access control for confidential presentations.
 
 Screen frames are sent as compressed image data URLs. This is simple and
 portable, but it is not a replacement for WebRTC when low-latency video-scale

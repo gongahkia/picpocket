@@ -92,7 +92,9 @@ async function stopTestServer(instance) {
 
 function waitForClose(ws) {
   return new Promise((resolve) => {
-    ws.once("close", resolve);
+    ws.once("close", (code, reason) => {
+      resolve({ code, reason: reason.toString("utf8") });
+    });
   });
 }
 
@@ -109,11 +111,36 @@ function waitForMessage(ws) {
   });
 }
 
+function waitForNoMessage(ws, durationMs = 150) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      ws.off("message", onMessage);
+      resolve();
+    }, durationMs);
+
+    function onMessage(message) {
+      clearTimeout(timeout);
+      reject(new Error(`Unexpected WebSocket message: ${message}`));
+    }
+
+    ws.once("message", onMessage);
+  });
+}
+
 function waitForOpen(ws) {
   return new Promise((resolve, reject) => {
     ws.once("open", resolve);
     ws.once("error", reject);
   });
+}
+
+function parsePresenterRedirect(origin, location) {
+  const url = new URL(`${origin}${location}`);
+
+  return {
+    presenterToken: url.searchParams.get("token"),
+    sessionId: url.searchParams.get("id"),
+  };
 }
 
 test("HTTP routes create and serve presentation sessions", async () => {
@@ -128,15 +155,19 @@ test("HTTP routes create and serve presentation sessions", async () => {
   assert.equal(presenter.statusCode, 302);
   assert.match(
     presenter.headers.location,
-    /^\/presenter\.html\?id=[a-z]+-[a-z]+$/,
+    /^\/presenter\.html\?id=[a-z]+-[a-z]+&token=[A-Za-z0-9_-]{43}$/,
   );
 
-  const sessionId = new URL(
-    `${instance.origin}${presenter.headers.location}`,
-  ).searchParams.get("id");
+  const { presenterToken, sessionId } = parsePresenterRedirect(
+    instance.origin,
+    presenter.headers.location,
+  );
+  assert.match(presenterToken, /^[A-Za-z0-9_-]{43}$/);
+
   const join = await httpRequest(instance.origin, `/join/${sessionId}`);
   assert.equal(join.statusCode, 200);
   assert.match(join.body.toString("utf8"), /PicPocket Audience/);
+  assert.doesNotMatch(join.body.toString("utf8"), new RegExp(presenterToken));
 
   const missingJoin = await httpRequest(instance.origin, "/join/not-a-session");
   assert.equal(missingJoin.statusCode, 404);
@@ -184,11 +215,12 @@ test("WebSocket relay broadcasts frames and lifecycle messages", async () => {
   test.after(() => stopTestServer(instance));
 
   const presenterResponse = await httpRequest(instance.origin, "/presenter");
-  const sessionId = new URL(
-    `${instance.origin}${presenterResponse.headers.location}`,
-  ).searchParams.get("id");
+  const { presenterToken, sessionId } = parsePresenterRedirect(
+    instance.origin,
+    presenterResponse.headers.location,
+  );
   const presenter = new WebSocket(
-    `${instance.wsOrigin}/ws/presenter?id=${sessionId}`,
+    `${instance.wsOrigin}/ws/presenter?id=${sessionId}&token=${presenterToken}`,
   );
   const audience = new WebSocket(
     `${instance.wsOrigin}/ws/audience?id=${sessionId}`,
@@ -197,7 +229,7 @@ test("WebSocket relay broadcasts frames and lifecycle messages", async () => {
   await Promise.all([waitForOpen(presenter), waitForOpen(audience)]);
 
   const duplicatePresenter = new WebSocket(
-    `${instance.wsOrigin}/ws/presenter?id=${sessionId}`,
+    `${instance.wsOrigin}/ws/presenter?id=${sessionId}&token=${presenterToken}`,
   );
   await waitForClose(duplicatePresenter);
 
@@ -233,4 +265,42 @@ test("WebSocket relay broadcasts frames and lifecycle messages", async () => {
 
   audience.close();
   lateAudience.close();
+});
+
+test("audience links cannot publish frames or connect as presenter", async () => {
+  const instance = await startTestServer();
+  test.after(() => stopTestServer(instance));
+
+  const presenterResponse = await httpRequest(instance.origin, "/presenter");
+  const { sessionId } = parsePresenterRedirect(
+    instance.origin,
+    presenterResponse.headers.location,
+  );
+  const audience = new WebSocket(
+    `${instance.wsOrigin}/ws/audience?id=${sessionId}`,
+  );
+  const listener = new WebSocket(
+    `${instance.wsOrigin}/ws/audience?id=${sessionId}`,
+  );
+
+  await Promise.all([waitForOpen(audience), waitForOpen(listener)]);
+
+  audience.send(
+    JSON.stringify({
+      imageData: SAMPLE_JPEG,
+      sentAt: 123,
+      type: "frame",
+    }),
+  );
+  await waitForNoMessage(listener);
+
+  const unauthenticatedPresenter = new WebSocket(
+    `${instance.wsOrigin}/ws/presenter?id=${sessionId}`,
+  );
+  const close = await waitForClose(unauthenticatedPresenter);
+  assert.equal(close.code, 1008);
+  assert.equal(close.reason, "Invalid presenter token");
+
+  audience.close();
+  listener.close();
 });
