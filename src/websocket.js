@@ -27,7 +27,7 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
     }
 
     if (role === "presenter") {
-      connectPresenter({ logger, session, sessionId, ws });
+      if (!connectPresenter({ logger, session, sessionId, ws })) return;
     } else if (role === "audience") {
       if (!connectAudience({ config, logger, session, sessionId, ws })) return;
     } else {
@@ -136,11 +136,12 @@ function connectPresenter({ logger, session, sessionId, ws }) {
     session.presenterWs.readyState === WebSocket.OPEN
   ) {
     closeWithPolicy(ws, "Presenter already connected");
-    return;
+    return false;
   }
 
   session.presenterWs = ws;
   logger.info(`Presenter connected to session: ${sessionId}`);
+  return true;
 }
 
 function isImageDataUrl(value) {
