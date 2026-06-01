@@ -24,6 +24,7 @@
     sendIntervalId: null,
     serverAlive: true,
     sessionId: "",
+    token: "",
     ws: null,
   };
 
@@ -66,8 +67,13 @@
 
   function connectWebSocket() {
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const params = new URLSearchParams({
+      id: state.sessionId,
+      token: state.token,
+    });
+
     state.ws = new WebSocket(
-      `${wsProtocol}://${window.location.host}/ws/presenter?id=${state.sessionId}`,
+      `${wsProtocol}://${window.location.host}/ws/presenter?${params.toString()}`,
     );
 
     state.ws.onopen = function () {
@@ -130,9 +136,10 @@
   function initialize() {
     const urlParams = new URLSearchParams(window.location.search);
     state.sessionId = urlParams.get("id") || "";
+    state.token = urlParams.get("token") || "";
 
-    if (!state.sessionId) {
-      setStatus("No session ID found. Start from the main page.");
+    if (!state.sessionId || !state.token) {
+      setStatus("Presenter credentials are missing. Start from the main page.");
       sessionBadge.textContent = "Missing session";
       startNewSessionButton.style.display = "inline-flex";
       return;

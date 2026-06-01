@@ -1,10 +1,16 @@
+const crypto = require("crypto");
 const { colors, uniqueNamesGenerator } = require("unique-names-generator");
 
 const customWords = require("../words");
 
 const SESSION_ID_PATTERN = /^[a-z]+-[a-z]+$/;
+const PRESENTER_TOKEN_BYTES = 32;
+const PRESENTER_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
-function createSessionStore({ now = () => Date.now() } = {}) {
+function createSessionStore({
+  now = () => Date.now(),
+  randomBytes = crypto.randomBytes,
+} = {}) {
   const sessions = new Map();
 
   function createSession(ttlMs) {
@@ -30,6 +36,7 @@ function createSessionStore({ now = () => Date.now() } = {}) {
       createdAt: now(),
       expiresAt: ttlMs ? now() + ttlMs : null,
       latestFrame: null,
+      presenterToken: createPresenterToken(randomBytes),
       presenterWs: null,
       sessionId,
     };
@@ -62,13 +69,45 @@ function createSessionStore({ now = () => Date.now() } = {}) {
     return typeof sessionId === "string" && SESSION_ID_PATTERN.test(sessionId);
   }
 
+  function isValidPresenterToken(presenterToken) {
+    return (
+      typeof presenterToken === "string" &&
+      PRESENTER_TOKEN_PATTERN.test(presenterToken)
+    );
+  }
+
+  function verifyPresenterToken(session, presenterToken) {
+    if (!session || !isValidPresenterToken(presenterToken)) return false;
+
+    const expected = Buffer.from(session.presenterToken);
+    const actual = Buffer.from(presenterToken);
+
+    return (
+      expected.length === actual.length && crypto.timingSafeEqual(expected, actual)
+    );
+  }
+
   return {
     createSession,
     deleteSession,
     getSession,
     hasSession,
+    isValidPresenterToken,
     isValidSessionId,
+    verifyPresenterToken,
   };
 }
 
-module.exports = { SESSION_ID_PATTERN, createSessionStore };
+function createPresenterToken(randomBytes) {
+  return randomBytes(PRESENTER_TOKEN_BYTES)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+module.exports = {
+  PRESENTER_TOKEN_PATTERN,
+  SESSION_ID_PATTERN,
+  createSessionStore,
+};

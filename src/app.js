@@ -66,7 +66,12 @@ function createApp({ config, logger, sessions }) {
   app.get("/presenter", (req, res) => {
     const session = sessions.createSession(config.sessionTtlMs);
     logger.info(`New session created: ${session.sessionId}`);
-    res.redirect(`/presenter.html?id=${session.sessionId}`);
+    const params = new URLSearchParams({
+      id: session.sessionId,
+      token: session.presenterToken,
+    });
+
+    res.redirect(`/presenter.html?${params.toString()}`);
   });
 
   app.get("/join/:sessionId", (req, res) => {

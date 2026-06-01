@@ -13,7 +13,7 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
   });
 
   wss.on("connection", (ws, req) => {
-    const { role, sessionId } = parseRequest(req);
+    const { presenterToken, role, sessionId } = parseRequest(req);
 
     if (!sessions.isValidSessionId(sessionId)) {
       closeWithPolicy(ws, "Invalid session ID");
@@ -27,7 +27,18 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
     }
 
     if (role === "presenter") {
-      if (!connectPresenter({ logger, session, sessionId, ws })) return;
+      if (
+        !connectPresenter({
+          logger,
+          presenterToken,
+          session,
+          sessionId,
+          sessions,
+          ws,
+        })
+      ) {
+        return;
+      }
     } else if (role === "audience") {
       if (!connectAudience({ config, logger, session, sessionId, ws })) return;
     } else {
@@ -130,7 +141,19 @@ function connectAudience({ config, logger, session, sessionId, ws }) {
   return true;
 }
 
-function connectPresenter({ logger, session, sessionId, ws }) {
+function connectPresenter({
+  logger,
+  presenterToken,
+  session,
+  sessionId,
+  sessions,
+  ws,
+}) {
+  if (!sessions.verifyPresenterToken(session, presenterToken)) {
+    closeWithPolicy(ws, "Invalid presenter token");
+    return false;
+  }
+
   if (
     session.presenterWs &&
     session.presenterWs.readyState === WebSocket.OPEN
@@ -185,6 +208,7 @@ function parseRequest(req) {
   const [, wsPrefix, role] = url.pathname.split("/");
 
   return {
+    presenterToken: url.searchParams.get("token") || "",
     role: wsPrefix === "ws" ? role : null,
     sessionId: url.searchParams.get("id") || "",
   };
