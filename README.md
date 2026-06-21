@@ -2,9 +2,6 @@
 ![](https://github.com/gongahkia/picpocket/actions/workflows/ci.yml/badge.svg)
 ![](https://img.shields.io/badge/picpocket_1.0.0-deployment_down-orange)
 
-> [!WARNING]  
-> [PicPocket](https://github.com/gongahkia/picpocket)'s Render deployment is inactive as of 1 June 2026.
-
 # `PicPocket`
 
 [Share Screen](https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060596) for [IRL](https://dictionary.cambridge.org/dictionary/english/irl) presentations.
