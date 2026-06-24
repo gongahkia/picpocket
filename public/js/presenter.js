@@ -6,20 +6,20 @@
 
   const CAPTURE = {
     burstDurationMs: 2000,
-    compareCanvasSize: 16,
+    compareCanvasSize: 32,
     highFps: 10,
-    imageQuality: 0.72,
+    imageQuality: 0.82,
     lowFps: 1,
-    maxFrameDimension: 1600,
+    maxFrameDimension: 1800,
     mimeType: "image/jpeg",
-    pixelChangeThresholdPercent: 0.01,
+    pixelChangeThreshold: 0.015,
   };
 
   const state = {
     burstTimeout: null,
     currentFps: CAPTURE.lowFps,
     firstFrameSent: false,
-    lastAvgPixelIntensity: 0,
+    lastCompareData: null,
     mediaStream: null,
     sendIntervalId: null,
     serverAlive: true,
@@ -106,7 +106,7 @@
     };
   }
 
-  function getAveragePixelIntensity(sourceCanvas) {
+  function getFrameDifference(sourceCanvas) {
     compareCtx.drawImage(
       sourceCanvas,
       0,
@@ -121,16 +121,23 @@
       CAPTURE.compareCanvasSize,
       CAPTURE.compareCanvasSize,
     ).data;
-    let sum = 0;
 
-    for (let i = 0; i < imageData.length; i += 4) {
-      sum +=
-        imageData[i] * 0.299 +
-        imageData[i + 1] * 0.587 +
-        imageData[i + 2] * 0.114;
+    if (!state.lastCompareData) {
+      state.lastCompareData = new Uint8ClampedArray(imageData);
+      return 1;
     }
 
-    return sum / (CAPTURE.compareCanvasSize * CAPTURE.compareCanvasSize);
+    let diff = 0;
+
+    for (let i = 0; i < imageData.length; i += 4) {
+      diff += Math.abs(imageData[i] - state.lastCompareData[i]);
+      diff += Math.abs(imageData[i + 1] - state.lastCompareData[i + 1]);
+      diff += Math.abs(imageData[i + 2] - state.lastCompareData[i + 2]);
+    }
+
+    state.lastCompareData.set(imageData);
+
+    return diff / (CAPTURE.compareCanvasSize * CAPTURE.compareCanvasSize * 765);
   }
 
   function initialize() {
@@ -248,16 +255,13 @@
       captureCanvas.height,
     );
 
-    const currentAvgPixelIntensity = getAveragePixelIntensity(captureCanvas);
-    const intensityDiff =
-      Math.abs(currentAvgPixelIntensity - state.lastAvgPixelIntensity) / 255;
+    const frameDifference = getFrameDifference(captureCanvas);
     const imageData = captureCanvas.toDataURL(
       CAPTURE.mimeType,
       CAPTURE.imageQuality,
     );
     const shouldSendBurst =
-      intensityDiff > CAPTURE.pixelChangeThresholdPercent ||
-      !state.firstFrameSent;
+      frameDifference > CAPTURE.pixelChangeThreshold || !state.firstFrameSent;
 
     if (shouldSendBurst) {
       sendPresenterMessage({
@@ -266,7 +270,6 @@
         type: MESSAGE_TYPES.FRAME,
       });
 
-      state.lastAvgPixelIntensity = currentAvgPixelIntensity;
       state.firstFrameSent = true;
 
       if (state.currentFps !== CAPTURE.highFps) setSendFps(CAPTURE.highFps);
@@ -340,7 +343,7 @@
     previewVideo.srcObject = null;
     previewVideo.style.display = "none";
     state.firstFrameSent = false;
-    state.lastAvgPixelIntensity = 0;
+    state.lastCompareData = null;
 
     sendPresenterMessage({ type: MESSAGE_TYPES.AWAITING });
 
