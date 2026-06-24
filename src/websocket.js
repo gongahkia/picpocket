@@ -49,7 +49,9 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
     ws.on("message", (rawMessage) => {
       if (ws !== session.presenterWs) return;
 
-      const message = parsePresenterMessage(rawMessage);
+      const message = parsePresenterMessage(rawMessage, {
+        frameDataUrlMaxBytes: config.frameDataUrlMaxBytes,
+      });
       if (!message) {
         closeWithPolicy(ws, "Invalid presenter message");
         return;
@@ -63,7 +65,10 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
         session.latestFrame = null;
       }
 
-      broadcast(session.audienceWs, message);
+      broadcast(session.audienceWs, message, {
+        dropBuffered: message.type === MESSAGE_TYPES.FRAME,
+        maxBufferedBytes: config.wsMaxPayloadBytes,
+      });
     });
 
     ws.on("close", () => {
@@ -97,11 +102,16 @@ function attachWebSocketServer({ config, logger, server, sessions }) {
   return wss;
 }
 
-function broadcast(audienceWs, message) {
+function broadcast(audienceWs, message, options = {}) {
   const payload = JSON.stringify(message);
+  const maxBufferedBytes = options.maxBufferedBytes || Infinity;
 
   audienceWs.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
+      if (options.dropBuffered && client.bufferedAmount > maxBufferedBytes) {
+        return;
+      }
+
       client.send(payload);
     }
   });
@@ -167,14 +177,15 @@ function connectPresenter({
   return true;
 }
 
-function isImageDataUrl(value) {
+function isImageDataUrl(value, maxBytes) {
   return (
     typeof value === "string" &&
+    Buffer.byteLength(value, "utf8") <= maxBytes &&
     /^data:image\/(png|jpeg|jpg|webp);base64,/.test(value)
   );
 }
 
-function parsePresenterMessage(rawMessage) {
+function parsePresenterMessage(rawMessage, { frameDataUrlMaxBytes }) {
   let message;
 
   try {
@@ -191,7 +202,7 @@ function parsePresenterMessage(rawMessage) {
 
   if (
     message.type === MESSAGE_TYPES.FRAME &&
-    isImageDataUrl(message.imageData)
+    isImageDataUrl(message.imageData, frameDataUrlMaxBytes)
   ) {
     return {
       imageData: message.imageData,

@@ -10,6 +10,11 @@ function readNumber(env, key, fallback) {
 function loadConfig(env = process.env) {
   return {
     debug: env.DEBUG === "true",
+    frameDataUrlMaxBytes: readNumber(
+      env,
+      "FRAME_DATA_URL_MAX_BYTES",
+      5 * 1024 * 1024,
+    ),
     jsonBodyLimit: env.JSON_BODY_LIMIT || "10mb",
     maxAudiencePerSession: readNumber(env, "MAX_AUDIENCE_PER_SESSION", 250),
     qrRateLimitMax: readNumber(env, "QR_RATE_LIMIT_MAX", 120),
