@@ -1,6 +1,6 @@
 [![](https://img.shields.io/badge/picpocket_1.0.0-passing-green)](https://github.com/gongahkia/tanabata/releases/tag/1.0.0)
 ![](https://github.com/gongahkia/picpocket/actions/workflows/ci.yml/badge.svg)
-![](https://img.shields.io/badge/picpocket_1.0.0-deployment_down-orange)
+![](https://img.shields.io/badge/picpocket_1.0.0-deployment_up-light_green)
 
 # `PicPocket`
 
