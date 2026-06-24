@@ -225,4 +225,4 @@ function parseRequest(req) {
   };
 }
 
-module.exports = { MESSAGE_TYPES, attachWebSocketServer };
+module.exports = { MESSAGE_TYPES, attachWebSocketServer, broadcast };

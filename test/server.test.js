@@ -1,9 +1,12 @@
 const assert = require("assert/strict");
 const http = require("http");
 const test = require("node:test");
+const sharp = require("sharp");
 const WebSocket = require("ws");
 
 const { createServer } = require("../server");
+const { compressToPng, parseImageDataUrl } = require("../src/imageService");
+const { broadcast } = require("../src/websocket");
 
 const SAMPLE_PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
@@ -51,15 +54,22 @@ async function httpRequest(origin, path, options = {}) {
   });
 }
 
-async function startTestServer() {
+async function startTestServer(envOverrides = {}) {
   const instance = createServer({
     env: {
       DEBUG: "false",
+      FRAME_DATA_URL_MAX_BYTES: String(1024 * 1024),
       JSON_BODY_LIMIT: "1mb",
       MAX_AUDIENCE_PER_SESSION: "10",
+      MAX_IMAGE_INPUT_BYTES: String(1024 * 1024),
+      MAX_IMAGE_PIXELS: "4000000",
       PORT: "0",
+      QR_RATE_LIMIT_MAX: "120",
+      RATE_LIMIT_WINDOW_MS: "60000",
+      SAVE_RATE_LIMIT_MAX: "60",
       SESSION_TTL_MS: "60000",
       WS_MAX_PAYLOAD_BYTES: String(1024 * 1024),
+      ...envOverrides,
     },
     logger: createSilentLogger(),
   });
@@ -150,9 +160,12 @@ test("HTTP routes create and serve presentation sessions", async () => {
   const health = await httpRequest(instance.origin, "/healthz");
   assert.equal(health.statusCode, 200);
   assert.equal(health.body.toString("utf8"), "ok");
+  assert.match(health.headers["content-security-policy"], /default-src 'self'/);
+  assert.equal(health.headers["x-content-type-options"], "nosniff");
 
   const presenter = await httpRequest(instance.origin, "/presenter");
   assert.equal(presenter.statusCode, 302);
+  assert.match(presenter.headers["cache-control"], /no-store/);
   assert.match(
     presenter.headers.location,
     /^\/presenter\.html\?id=[a-z]+-[a-z]+&token=[A-Za-z0-9_-]{43}$/,
@@ -166,8 +179,16 @@ test("HTTP routes create and serve presentation sessions", async () => {
 
   const join = await httpRequest(instance.origin, `/join/${sessionId}`);
   assert.equal(join.statusCode, 200);
+  assert.match(join.headers["cache-control"], /no-store/);
   assert.match(join.body.toString("utf8"), /PicPocket Audience/);
   assert.doesNotMatch(join.body.toString("utf8"), new RegExp(presenterToken));
+
+  const presenterPage = await httpRequest(
+    instance.origin,
+    presenter.headers.location,
+  );
+  assert.equal(presenterPage.statusCode, 200);
+  assert.match(presenterPage.headers["cache-control"], /no-store/);
 
   const missingJoin = await httpRequest(instance.origin, "/join/not-a-session");
   assert.equal(missingJoin.statusCode, 404);
@@ -196,6 +217,34 @@ test("image save endpoint validates and returns compressed PNG", async () => {
   assert.equal(invalid.statusCode, 400);
 });
 
+test("image validation rejects bad base64 and oversized images", async () => {
+  assert.throws(
+    () =>
+      parseImageDataUrl("data:image/png;base64,abc", {
+        maxInputBytes: 1024,
+      }),
+    /Invalid image data/,
+  );
+
+  const image = await sharp({
+    create: {
+      background: { alpha: 1, b: 0, g: 0, r: 0 },
+      channels: 4,
+      height: 2,
+      width: 2,
+    },
+  })
+    .png()
+    .toBuffer();
+
+  await assert.rejects(
+    compressToPng(`data:image/png;base64,${image.toString("base64")}`, {
+      maxInputBytes: 1024,
+      maxPixels: 1,
+    }),
+  );
+});
+
 test("QR endpoint renders an SVG for audience links", async () => {
   const instance = await startTestServer();
   test.after(() => stopTestServer(instance));
@@ -208,6 +257,19 @@ test("QR endpoint renders an SVG for audience links", async () => {
   assert.equal(response.statusCode, 200);
   assert.match(response.headers["content-type"], /image\/svg\+xml/);
   assert.match(response.body.toString("utf8"), /<svg/);
+});
+
+test("API rate limits repeated QR requests", async () => {
+  const instance = await startTestServer({ QR_RATE_LIMIT_MAX: "1" });
+  test.after(() => stopTestServer(instance));
+
+  const path = `/api/qrcode?data=${encodeURIComponent(`${instance.origin}/join/blue-room`)}`;
+  const first = await httpRequest(instance.origin, path);
+  const second = await httpRequest(instance.origin, path);
+
+  assert.equal(first.statusCode, 200);
+  assert.equal(second.statusCode, 429);
+  assert.ok(second.headers["retry-after"]);
 });
 
 test("WebSocket relay broadcasts frames and lifecycle messages", async () => {
@@ -303,4 +365,58 @@ test("audience links cannot publish frames or connect as presenter", async () =>
 
   audience.close();
   listener.close();
+});
+
+test("oversized presenter frames are rejected", async () => {
+  const instance = await startTestServer({ FRAME_DATA_URL_MAX_BYTES: "48" });
+  test.after(() => stopTestServer(instance));
+
+  const presenterResponse = await httpRequest(instance.origin, "/presenter");
+  const { presenterToken, sessionId } = parsePresenterRedirect(
+    instance.origin,
+    presenterResponse.headers.location,
+  );
+  const presenter = new WebSocket(
+    `${instance.wsOrigin}/ws/presenter?id=${sessionId}&token=${presenterToken}`,
+  );
+
+  await waitForOpen(presenter);
+  const close = waitForClose(presenter);
+  presenter.send(
+    JSON.stringify({
+      imageData: `data:image/png;base64,${"A".repeat(100)}`,
+      type: "frame",
+    }),
+  );
+
+  assert.deepEqual(await close, {
+    code: 1008,
+    reason: "Invalid presenter message",
+  });
+});
+
+test("frame broadcast skips slow audience clients", () => {
+  const sent = [];
+  const slowClient = {
+    bufferedAmount: 11,
+    readyState: WebSocket.OPEN,
+    send() {
+      sent.push("slow");
+    },
+  };
+  const fastClient = {
+    bufferedAmount: 0,
+    readyState: WebSocket.OPEN,
+    send(payload) {
+      sent.push(JSON.parse(payload).type);
+    },
+  };
+
+  broadcast(
+    new Set([slowClient, fastClient]),
+    { imageData: SAMPLE_PNG, type: "frame" },
+    { dropBuffered: true, maxBufferedBytes: 10 },
+  );
+
+  assert.deepEqual(sent, ["frame"]);
 });
