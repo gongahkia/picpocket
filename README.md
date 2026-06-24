@@ -34,6 +34,9 @@ sequenceDiagram
 
     Presenter->>Server: GET /presenter
     Server->>Presenter: Redirect /presenter.html?id=:sessionId&token=:presenterToken
+    Presenter->>Server: GET /api/qrcode?data=:audienceUrl
+    Server->>Server: Apply QR rate limit
+    Server->>Presenter: Return QR SVG
     Presenter->>Server: WS /ws/presenter?id=:sessionId&token=:presenterToken
 
     Audience->>Server: GET /join/:sessionId
@@ -42,10 +45,12 @@ sequenceDiagram
 
     loop Screen Sharing
         Presenter->>Server: { type: "frame", imageData }
-        Server->>Audience: Broadcast frame
+        Server->>Server: Validate frame size
+        Server->>Audience: Broadcast frame, skipping slow clients
     end
 
     Audience->>Server: POST /api/save-image
+    Server->>Server: Apply save rate limit and validate image metadata
     Server->>Audience: Return compressed PNG
 
     Presenter->>Server: Disconnect
