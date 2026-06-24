@@ -17,6 +17,12 @@ function loadConfig(env = process.env) {
     ),
     jsonBodyLimit: env.JSON_BODY_LIMIT || "10mb",
     maxAudiencePerSession: readNumber(env, "MAX_AUDIENCE_PER_SESSION", 250),
+    maxImageInputBytes: readNumber(
+      env,
+      "MAX_IMAGE_INPUT_BYTES",
+      6 * 1024 * 1024,
+    ),
+    maxImagePixels: readNumber(env, "MAX_IMAGE_PIXELS", 4 * 1000 * 1000),
     qrRateLimitMax: readNumber(env, "QR_RATE_LIMIT_MAX", 120),
     port: readNumber(env, "PORT", 3000),
     rateLimitWindowMs: readNumber(env, "RATE_LIMIT_WINDOW_MS", 60 * 1000),

@@ -62,7 +62,10 @@ function createApp({ config, logger, sessions }) {
     }),
     async (req, res) => {
       try {
-        const compressed = await compressToPng(req.body && req.body.imageData);
+        const compressed = await compressToPng(req.body && req.body.imageData, {
+          maxInputBytes: config.maxImageInputBytes,
+          maxPixels: config.maxImagePixels,
+        });
         const filename = `picpocket-${Date.now()}.png`;
 
         res.setHeader(
