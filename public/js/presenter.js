@@ -32,7 +32,6 @@
   };
 
   const statusEl = document.getElementById("status");
-  const sessionBadge = document.getElementById("sessionBadge");
   const sessionCode = document.getElementById("sessionCode");
   const captureSupportMessage = document.getElementById(
     "captureSupportMessage",
@@ -89,9 +88,6 @@
           ? "Your audience can join now. Choose a screen whenever you’re ready."
           : "Your session is ready, but this browser can’t share a screen. Use a supported desktop browser to present.",
       );
-      sessionBadge.textContent = state.captureSupported
-        ? "Ready to share"
-        : "Desktop required";
       startSharingButton.disabled = !state.captureSupported;
       stopSharingButton.disabled = true;
       startNewSessionButton.hidden = true;
@@ -103,7 +99,6 @@
       setStatus(
         "Session not found or expired. Start a new session to continue.",
       );
-      sessionBadge.textContent = "Expired";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = true;
       startNewSessionButton.hidden = false;
@@ -114,7 +109,6 @@
       setStatus(
         "Connection error. Check your network and start a new session if needed.",
       );
-      sessionBadge.textContent = "Connection error";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = true;
       startNewSessionButton.hidden = false;
@@ -163,7 +157,6 @@
 
     if (!state.sessionId || !state.token) {
       setStatus("Presenter credentials are missing. Start from the main page.");
-      sessionBadge.textContent = "Missing session";
       startNewSessionButton.hidden = false;
       return;
     }
@@ -175,7 +168,6 @@
     qrCodeImage.hidden = false;
 
     setStatus("Connecting presenter session...");
-    sessionBadge.textContent = "Connecting";
     connectWebSocket();
     startServerPing();
   }
@@ -224,7 +216,6 @@
       setStatus(
         "Sharing screen. Audience members will see updates automatically.",
       );
-      sessionBadge.textContent = "Sharing live";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = false;
       startNewSessionButton.hidden = true;
@@ -340,7 +331,6 @@
         setStatus(
           "Server is unavailable. Start a new session when it is back online.",
         );
-        sessionBadge.textContent = "Server offline";
         startSharingButton.disabled = true;
         stopSharingButton.disabled = true;
         copyLinkButton.disabled = true;
@@ -356,7 +346,6 @@
     sendPresenterMessage({ type: MESSAGE_TYPES.AWAITING });
 
     setStatus("Screen sharing stopped. You can select a new screen to share.");
-    sessionBadge.textContent = "Sharing paused";
     startSharingButton.disabled =
       !state.captureSupported || state.ws?.readyState !== WebSocket.OPEN;
     stopSharingButton.disabled = true;

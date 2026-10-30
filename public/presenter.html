@@ -27,10 +27,6 @@
           <h1>Presenter Dashboard</h1>
           <p id="status" role="status">Setting up your room…</p>
         </div>
-        <div class="status-pill">
-          <span class="status-dot" aria-hidden="true"></span
-          ><span id="sessionBadge">Connecting</span>
-        </div>
       </div>
       <p id="captureSupportMessage" class="notice" hidden>
         This browser can’t share a screen. Open PicPocket in a supported desktop
@@ -48,7 +44,7 @@
                 ><svg class="icon" aria-hidden="true">
                   <use href="/icons.svg#screen" /></svg
                 >Your screen</span
-              ><span>Only what you choose to share</span>
+              >
             </div>
             <div class="preview-stage">
               <div class="preview-placeholder">
@@ -97,9 +93,7 @@
             </div>
           </div>
         </section>
-        <aside class="share-panel" aria-labelledby="invite-title">
-          <h2 id="invite-title">Bring everyone in.</h2>
-          <p>One quick scan. A clear view for the whole room.</p>
+        <aside class="share-panel" aria-label="Audience join information">
           <div class="qr-frame">
             <img
               id="qrCodeImage"
@@ -142,9 +136,6 @@
           </div>
         </aside>
       </div>
-      <p class="workspace-footnote">
-        You do the talking. PicPocket takes care of the view.
-      </p>
     </main>
     <dialog
       id="presenterGuide"

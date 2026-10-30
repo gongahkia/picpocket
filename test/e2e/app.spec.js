@@ -258,7 +258,7 @@ test("screen capture handles permission denial, live frames, pause, and restart"
   await expect(page.locator("#noPermissionMessage")).toBeVisible();
   await expect(start).toBeEnabled();
   await start.click();
-  await expect(page.locator("#sessionBadge")).toHaveText("Sharing live");
+  await expect(page.locator("body")).toHaveAttribute("data-sharing", "true");
   await expect(audience.locator("#slideDisplay")).toBeVisible();
   await expect
     .poll(() =>

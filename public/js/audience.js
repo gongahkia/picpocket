@@ -86,7 +86,6 @@
     };
 
     state.ws.onclose = function () {
-      emptyState.querySelector(".empty-note").hidden = true;
       clearFrame(
         state.ended
           ? "Presentation ended. You may close this tab."
@@ -104,7 +103,6 @@
     };
 
     state.ws.onerror = function () {
-      emptyState.querySelector(".empty-note").hidden = true;
       clearFrame("Connection error. Please refresh.");
       connectionStatus.textContent = "Connection error";
       copyLinkButton.disabled = true;
