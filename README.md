@@ -24,6 +24,21 @@ A presenter shares their screen once, audience members join with a QR code or li
 - Audience zoom, pan and share-link
 - Server-side PNG saves
 
+## Screenshots
+
+![PicPocket homepage](./asset/screenshots/home-desktop.png)
+
+![Presenter dashboard sharing a screen](./asset/screenshots/presenter-desktop.png)
+
+![Live audience view on desktop](./asset/screenshots/audience-desktop.png)
+
+<p align="center">
+  <img src="./asset/screenshots/presenter-mobile.png" width="32%" alt="Presenter dashboard at phone width" />
+  <img src="./asset/screenshots/audience-mobile.png" width="32%" alt="Live audience view on a phone" />
+</p>
+
+![Quick guide with a blurred backdrop](./asset/screenshots/quick-guide.png)
+
 ## Architecture
 
 ```mermaid

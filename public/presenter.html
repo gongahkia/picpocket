@@ -146,37 +146,58 @@
         You do the talking. PicPocket takes care of the view.
       </p>
     </main>
-    <dialog id="presenterGuide" class="guide-dialog" data-onboarding="presenter" aria-labelledby="presenterGuideTitle">
-      <button class="guide-close" type="button" aria-label="Close quick guide" data-guide-dismiss>×</button>
-      <div class="guide-heading"><svg class="icon" aria-hidden="true"><use href="/icons.svg#help" /></svg><h2 id="presenterGuideTitle">Your first presentation? Start here.</h2></div>
+    <dialog
+      id="presenterGuide"
+      class="guide-dialog"
+      data-onboarding="presenter"
+      aria-labelledby="presenterGuideTitle"
+    >
+      <button
+        class="guide-close"
+        type="button"
+        aria-label="Close quick guide"
+        data-guide-dismiss
+      >
+        ×
+      </button>
+      <div class="guide-heading">
+        <svg class="icon" aria-hidden="true">
+          <use href="/icons.svg#help" />
+        </svg>
+        <h2 id="presenterGuideTitle">Your first presentation? Start here.</h2>
+      </div>
       <div class="guide-content">
-              <ol class="steps">
-                <li>
-                  <span class="step-number" aria-hidden="true"></span>
-                  <h3>Choose your screen</h3>
-                  <p>
-                    Click Start Sharing Screen, then choose a tab, window, or
-                    your whole screen.
-                  </p>
-                </li>
-                <li>
-                  <span class="step-number" aria-hidden="true"></span>
-                  <h3>Invite your audience</h3>
-                  <p>
-                    Show the QR code or send the audience link. Keep this
-                    presenter tab open.
-                  </p>
-                </li>
-                <li>
-                  <span class="step-number" aria-hidden="true"></span>
-                  <h3>Present as usual</h3>
-                  <p>
-                    Updates appear automatically. Stop sharing to pause; closing
-                    this tab ends the session.
-                  </p>
-                </li>
-              </ol>
-        <button class="button guide-dismiss" type="button" data-guide-dismiss>Got it, let’s go<svg class="icon" aria-hidden="true"><use href="/icons.svg#check" /></svg></button>
+        <ol class="steps">
+          <li>
+            <span class="step-number" aria-hidden="true"></span>
+            <h3>Choose your screen</h3>
+            <p>
+              Click Start Sharing Screen, then choose a tab, window, or your
+              whole screen.
+            </p>
+          </li>
+          <li>
+            <span class="step-number" aria-hidden="true"></span>
+            <h3>Invite your audience</h3>
+            <p>
+              Show the QR code or send the audience link. Keep this presenter
+              tab open.
+            </p>
+          </li>
+          <li>
+            <span class="step-number" aria-hidden="true"></span>
+            <h3>Present as usual</h3>
+            <p>
+              Updates appear automatically. Stop sharing to pause; closing this
+              tab ends the session.
+            </p>
+          </li>
+        </ol>
+        <button class="button guide-dismiss" type="button" data-guide-dismiss>
+          Got it, let’s go<svg class="icon" aria-hidden="true">
+            <use href="/icons.svg#check" />
+          </svg>
+        </button>
       </div>
     </dialog>
   </body>

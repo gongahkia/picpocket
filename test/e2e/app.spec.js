@@ -152,10 +152,19 @@ test("audience view fits mobile viewport", async ({ browser, page }) => {
       ).toBeInViewport({ ratio: 1 });
     }
   }
-  await audience.getByRole("button", { name: "Got it", exact: true }).click();
   await expect(audience.locator("#viewerGuide")).toBeHidden();
   await audience.getByRole("button", { name: "Quick guide" }).click();
   await expect(audience.locator("#viewerGuide")).toBeVisible();
+  expect(
+    await audience
+      .locator("#viewerGuide")
+      .evaluate((dialog) => dialog.matches(":modal")),
+  ).toBe(true);
+  await audience.getByRole("button", { name: "Got it", exact: true }).click();
+  await expect(audience.locator("#viewerGuide")).toBeHidden();
+  await expect(
+    audience.getByRole("button", { name: "Quick guide" }),
+  ).toBeFocused();
 
   await mobile.close();
 });
@@ -163,14 +172,32 @@ test("audience view fits mobile viewport", async ({ browser, page }) => {
 test("presenter onboarding can be dismissed and reopened", async ({ page }) => {
   await page.goto("/presenter");
   const guide = page.locator("[data-onboarding=presenter]");
-  await expect(guide).toBeVisible();
-  await page.getByRole("button", { name: "Got it, let’s go" }).click();
-  await expect(guide).toBeHidden();
-  await page.goto("/presenter");
   await expect(guide).toBeHidden();
   await page.getByRole("button", { name: "Quick guide" }).click();
   await expect(guide).toBeVisible();
-  await expect(guide.locator("summary")).toBeFocused();
+  expect(await guide.evaluate((dialog) => dialog.matches(":modal"))).toBe(true);
+  expect(
+    await guide.evaluate(
+      (dialog) => getComputedStyle(dialog, "::backdrop").backdropFilter,
+    ),
+  ).toBe("blur(7px)");
+  const close = page.getByRole("button", { name: "Close quick guide" });
+  await expect(close).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("button", { name: "Got it, let’s go" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(close).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(guide).toBeHidden();
+  await expect(page.getByRole("button", { name: "Quick guide" })).toBeFocused();
+  await page.getByRole("button", { name: "Quick guide" }).click();
+  await close.click();
+  await expect(guide).toBeHidden();
+  await page.getByRole("button", { name: "Quick guide" }).click();
+  await page.mouse.click(4, 4);
+  await expect(guide).toBeHidden();
 });
 
 test("unsupported presenter browsers stay disabled after the session connects", async ({
@@ -277,6 +304,19 @@ test("audience keeps the original download when PNG conversion fails", async ({
 
 test("landing page fits small phones and desktop", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByRole("link", { name: "How it works" })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Start presenting" }),
+  ).toHaveCount(1);
+  for (const text of [
+    "For everyone in the room",
+    "No accounts. No installs.",
+    "Big ideas. Tiny text.",
+    "Made for the people at the back.",
+    "Watching a talk?",
+  ]) {
+    await expect(page.getByText(text, { exact: false })).toHaveCount(0);
+  }
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 844 });
     expect(
@@ -320,6 +360,7 @@ test("onboarding works when browser storage is blocked", async ({ page }) => {
     });
   });
   await page.goto("/presenter");
+  await page.getByRole("button", { name: "Quick guide" }).click();
   await page.getByRole("button", { name: "Got it, let’s go" }).click();
   await expect(page.locator("[data-onboarding]")).toBeHidden();
   await page.getByRole("button", { name: "Quick guide" }).click();
