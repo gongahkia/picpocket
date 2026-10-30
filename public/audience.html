@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#201b2c" />
+    <meta name="theme-color" content="#222320" />
     <title>PicPocket Audience — Live presentation</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/css/styles.css" />
@@ -17,10 +17,7 @@
     <a class="skip-link" href="#main">Skip to presentation</a>
     <header class="viewer-header">
       <a class="brand" href="/" aria-label="PicPocket home"
-        ><span class="brand-mark"
-          ><svg class="icon" aria-hidden="true">
-            <use href="/icons.svg#pocket" /></svg></span
-        >picpocket</a
+        ><span class="brand-mark" aria-hidden="true">🕵️</span>picpocket</a
       >
       <div class="viewer-header-tools">
         <div class="viewer-session">
@@ -48,7 +45,7 @@
         id="slideDisplay"
         alt="Live presentation slide"
         tabindex="0"
-        aria-describedby="viewerInstructions"
+        aria-label="Live presentation slide. Use plus and minus to zoom, arrow keys to pan, and zero to reset."
       />
       <div id="emptyState" class="viewer-empty">
         <div class="empty-illustration" aria-hidden="true">
@@ -56,7 +53,7 @@
             <svg class="icon"><use href="/icons.svg#screen" /></svg>
           </div>
           <div class="empty-phone">
-            <svg class="icon"><use href="/icons.svg#pocket" /></svg>
+            <span aria-hidden="true">🕵️</span>
           </div>
         </div>
         <h1 id="emptyTitle">You’ve got a good seat.</h1>
@@ -69,20 +66,18 @@
       </div>
       <p id="viewerFeedback" class="toast" role="status" hidden></p>
     </main>
-    <details
-      id="viewerGuide"
-      class="viewer-guide"
-      data-onboarding="audience"
-      open
-    >
-      <summary>Your pocket-sized guide</summary>
-      <p id="viewerInstructions">
-        Pinch or use + and − to zoom. Drag to look around; with the slide
-        focused, use arrow keys to pan. Double-tap or choose Fit to reset. Save
-        downloads the current slide.
-      </p>
-      <button type="button" data-guide-dismiss>Got it</button>
-    </details>
+    <dialog id="viewerGuide" class="guide-dialog" data-onboarding="audience" aria-labelledby="viewerGuideTitle">
+      <button class="guide-close" type="button" aria-label="Close quick guide" data-guide-dismiss>×</button>
+      <div class="guide-heading"><svg class="icon" aria-hidden="true"><use href="/icons.svg#help" /></svg><h2 id="viewerGuideTitle">Your pocket-sized guide</h2></div>
+      <div class="guide-content">
+        <ol class="steps">
+          <li><span class="step-number" aria-hidden="true"></span><h3>Take a closer look</h3><p>Pinch or use + and − to zoom. Drag to look around. With the slide focused, arrow keys pan.</p></li>
+          <li><span class="step-number" aria-hidden="true"></span><h3>Find your bearings</h3><p>Double-tap the slide or choose Fit to return to the full picture.</p></li>
+          <li><span class="step-number" aria-hidden="true"></span><h3>Keep a slide</h3><p>Save downloads the current slide. Share Link invites someone else to watch.</p></li>
+        </ol>
+        <button class="button guide-dismiss" type="button" data-guide-dismiss>Got it<svg class="icon" aria-hidden="true"><use href="/icons.svg#check" /></svg></button>
+      </div>
+    </dialog>
     <footer class="footer" aria-label="Presentation controls">
       <div class="viewer-tools">
         <div class="zoom-tools" role="group" aria-label="Slide zoom">
