@@ -3,313 +3,195 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PicPocket Presenter</title>
-    <style>
-      :root {
-        --accent: #16a34a;
-        --accent-dark: #15803d;
-        --bg: #eef2f7;
-        --danger: #dc2626;
-        --danger-dark: #991b1b;
-        --ink: #172033;
-        --muted: #5f6c80;
-        --panel: #ffffff;
-        --primary: #2563eb;
-        --primary-dark: #1d4ed8;
-        --ring: #c8d8f8;
-        --shadow: 0 18px 48px rgba(31, 41, 55, 0.12);
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        min-height: 100vh;
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family:
-          Inter,
-          ui-sans-serif,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-        display: grid;
-        place-items: center;
-        padding: 28px;
-      }
-
-      button,
-      input {
-        font: inherit;
-      }
-
-      .shell {
-        width: min(960px, 100%);
-        background: var(--panel);
-        border: 1px solid #d8e1ee;
-        border-radius: 14px;
-        box-shadow: var(--shadow);
-        padding: clamp(20px, 4vw, 36px);
-      }
-
-      .header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 24px;
-      }
-
-      h1 {
-        font-size: clamp(1.7rem, 3vw, 2.35rem);
-        line-height: 1.05;
-        margin: 0 0 10px;
-      }
-
-      #status {
-        color: var(--muted);
-        font-size: 1rem;
-        line-height: 1.45;
-        margin: 0;
-      }
-
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        border: 1px solid var(--ring);
-        border-radius: 999px;
-        color: var(--primary-dark);
-        background: #f8fbff;
-        min-height: 38px;
-        padding: 7px 13px;
-        white-space: nowrap;
-      }
-
-      .preview {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        border-radius: 10px;
-        border: 1px solid #cfd9e8;
-        background: #111827;
-        object-fit: contain;
-        display: none;
-        margin: 0 0 22px;
-      }
-
-      .controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 24px;
-      }
-
-      .button {
-        border: 0;
-        border-radius: 8px;
-        color: #ffffff;
-        cursor: pointer;
-        font-weight: 700;
-        min-height: 44px;
-        padding: 0 18px;
-        transition:
-          transform 0.16s ease,
-          background 0.16s ease,
-          opacity 0.16s ease;
-      }
-
-      .button:hover:not(:disabled) {
-        transform: translateY(-1px);
-      }
-
-      .button:disabled {
-        cursor: not-allowed;
-        opacity: 0.48;
-      }
-
-      .button-primary {
-        background: var(--primary);
-      }
-
-      .button-primary:hover:not(:disabled) {
-        background: var(--primary-dark);
-      }
-
-      .button-accent {
-        background: var(--accent);
-      }
-
-      .button-accent:hover:not(:disabled) {
-        background: var(--accent-dark);
-      }
-
-      .button-danger {
-        background: var(--danger);
-      }
-
-      .button-danger:hover:not(:disabled) {
-        background: var(--danger-dark);
-      }
-
-      .button-secondary {
-        background: #64748b;
-      }
-
-      .share-grid {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        gap: 24px;
-        align-items: center;
-        border-top: 1px solid #e4ebf4;
-        padding-top: 24px;
-      }
-
-      .qr-card {
-        display: grid;
-        gap: 10px;
-        justify-items: center;
-        color: var(--muted);
-      }
-
-      .qr-frame {
-        display: grid;
-        place-items: center;
-        width: 210px;
-        height: 210px;
-        border: 1px solid #d6dfed;
-        border-radius: 12px;
-        background: #ffffff;
-      }
-
-      #qrCodeImage {
-        width: 180px;
-        height: 180px;
-      }
-
-      .link-tools {
-        min-width: 0;
-      }
-
-      .link-tools label {
-        color: var(--muted);
-        display: block;
-        margin-bottom: 8px;
-      }
-
-      .copy-row {
-        display: flex;
-        gap: 10px;
-        min-width: 0;
-      }
-
-      #joinLinkInput {
-        flex: 1;
-        min-width: 0;
-        border: 1px solid #cfd9e8;
-        border-radius: 8px;
-        color: var(--ink);
-        padding: 0 12px;
-        height: 44px;
-      }
-
-      #noPermissionMessage {
-        color: var(--danger);
-        display: none;
-        font-weight: 700;
-        margin: -8px 0 18px;
-      }
-
-      @media (max-width: 720px) {
-        body {
-          padding: 14px;
-        }
-
-        .header,
-        .share-grid,
-        .copy-row {
-          grid-template-columns: 1fr;
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .status-pill {
-          white-space: normal;
-        }
-
-        .button,
-        #joinLinkInput {
-          width: 100%;
-        }
-      }
-    </style>
+    <meta name="theme-color" content="#f4f2fb" />
+    <title>Presenter — PicPocket</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script defer src="/js/ui.js"></script>
     <script defer src="/js/presenter.js"></script>
   </head>
-  <body>
-    <main class="shell">
-      <header class="header">
+  <body data-sharing="false">
+    <a class="skip-link" href="#main">Skip to dashboard</a>
+    <header class="site-header app-header">
+      <a class="brand" href="/" aria-label="PicPocket home"
+        ><span class="brand-mark"
+          ><svg class="icon" aria-hidden="true">
+            <use href="/icons.svg#pocket" /></svg></span
+        >picpocket</a
+      >
+      <button class="button button-quiet" type="button" data-guide-open>
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#help" /></svg
+        >Quick guide
+      </button>
+    </header>
+    <main id="main" class="workspace">
+      <div class="page-heading">
         <div>
           <h1>Presenter Dashboard</h1>
-          <p id="status">Loading session...</p>
+          <p id="status" role="status">Setting up your room…</p>
         </div>
-        <div id="sessionBadge" class="status-pill">Connecting</div>
-      </header>
-
-      <video
-        id="previewVideo"
-        class="preview"
-        autoplay
-        muted
-        playsinline
-      ></video>
-
-      <div class="controls">
-        <button id="startSharingButton" class="button button-accent" disabled>
-          Start Sharing Screen
-        </button>
-        <button id="stopSharingButton" class="button button-danger" disabled>
-          Stop Sharing
-        </button>
-        <button id="startNewSessionButton" class="button button-secondary">
-          Start New Session
-        </button>
+        <div class="status-pill">
+          <span class="status-dot" aria-hidden="true"></span
+          ><span id="sessionBadge">Connecting</span>
+        </div>
       </div>
-
-      <p id="noPermissionMessage">
-        Permission denied. Please allow screen sharing.
+      <p id="captureSupportMessage" class="notice" hidden>
+        This browser can’t share a screen. Open PicPocket in a supported desktop
+        browser to present. You can still join a presentation on this device.
       </p>
-
-      <section class="share-grid" aria-label="Audience join information">
-        <div class="qr-card">
+      <p id="noPermissionMessage" class="notice" role="alert">
+        Screen sharing wasn’t allowed. Try again and select a screen in your
+        browser’s sharing prompt.
+      </p>
+      <div class="presenter-grid">
+        <section aria-label="Screen sharing controls">
+          <div class="preview-panel">
+            <div class="panel-top">
+              <span class="panel-label"
+                ><svg class="icon" aria-hidden="true">
+                  <use href="/icons.svg#screen" /></svg
+                >Your screen</span
+              ><span>Only what you choose to share</span>
+            </div>
+            <div class="preview-stage">
+              <div class="preview-placeholder">
+                <div class="preview-symbol">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="/icons.svg#screen" />
+                  </svg>
+                </div>
+                <h2>Your room is ready.</h2>
+                <p>
+                  Choose a screen to share. Your audience will see it here, in
+                  real time.
+                </p>
+              </div>
+              <video
+                id="previewVideo"
+                class="preview"
+                autoplay
+                muted
+                playsinline
+                aria-label="Preview of the screen you are sharing"
+              ></video>
+            </div>
+            <div class="presenter-controls">
+              <button id="startSharingButton" class="button" disabled>
+                <svg class="icon" aria-hidden="true">
+                  <use href="/icons.svg#screen" /></svg
+                >Start Sharing Screen
+              </button>
+              <button
+                id="stopSharingButton"
+                class="button button-danger"
+                disabled
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use href="/icons.svg#stop" /></svg
+                >Stop Sharing
+              </button>
+              <button
+                id="startNewSessionButton"
+                class="button button-secondary"
+                hidden
+              >
+                Start New Session
+              </button>
+            </div>
+          </div>
+          <details class="quick-guide" data-onboarding="presenter" open>
+            <summary>
+              <svg class="icon" aria-hidden="true">
+                <use href="/icons.svg#help" /></svg
+              >Your first presentation? Start here.
+            </summary>
+            <div class="guide-content">
+              <ol class="steps">
+                <li>
+                  <span class="step-number" aria-hidden="true"></span>
+                  <h3>Choose your screen</h3>
+                  <p>
+                    Click Start Sharing Screen, then choose a tab, window, or
+                    your whole screen.
+                  </p>
+                </li>
+                <li>
+                  <span class="step-number" aria-hidden="true"></span>
+                  <h3>Invite your audience</h3>
+                  <p>
+                    Show the QR code or send the audience link. Keep this
+                    presenter tab open.
+                  </p>
+                </li>
+                <li>
+                  <span class="step-number" aria-hidden="true"></span>
+                  <h3>Present as usual</h3>
+                  <p>
+                    Updates appear automatically. Stop sharing to pause; closing
+                    this tab ends the session.
+                  </p>
+                </li>
+              </ol>
+              <button
+                class="button button-secondary guide-dismiss"
+                type="button"
+                data-guide-dismiss
+              >
+                Got it, let’s go<svg class="icon" aria-hidden="true">
+                  <use href="/icons.svg#check" />
+                </svg>
+              </button>
+            </div>
+          </details>
+        </section>
+        <aside class="share-panel" aria-labelledby="invite-title">
+          <h2 id="invite-title">Bring everyone in.</h2>
+          <p>One quick scan. A clear view for the whole room.</p>
           <div class="qr-frame">
-            <img id="qrCodeImage" alt="QR code for audience join link" />
+            <img
+              id="qrCodeImage"
+              alt="QR code for audience join link"
+              width="168"
+              height="168"
+              hidden
+            />
           </div>
-          <span>Scan to join</span>
-        </div>
-
-        <div class="link-tools">
-          <label for="joinLinkInput">Audience link</label>
+          <div id="sessionCode" class="session-code" translate="no">
+            Creating your session…
+          </div>
+          <label class="link-label" for="joinLinkInput">Audience link</label>
           <div class="copy-row">
-            <input id="joinLinkInput" type="text" readonly />
-            <button
-              id="copyLinkButton"
-              class="button button-primary"
-              type="button"
-            >
-              Copy
-            </button>
-            <button
-              id="openAudienceButton"
-              class="button button-secondary"
-              type="button"
-            >
-              Open
-            </button>
+            <input
+              id="joinLinkInput"
+              type="text"
+              name="audience-link"
+              readonly
+              spellcheck="false"
+              autocomplete="off"
+            /><button id="copyLinkButton" type="button">Copy</button>
           </div>
-        </div>
-      </section>
+          <button
+            id="openAudienceButton"
+            class="button button-secondary audience-open"
+            type="button"
+          >
+            Open audience view<svg class="icon" aria-hidden="true">
+              <use href="/icons.svg#expand" />
+            </svg>
+          </button>
+          <div class="share-note">
+            <svg class="icon" aria-hidden="true">
+              <use href="/icons.svg#link" /></svg
+            ><span
+              >Share this audience link. Keep your presenter URL private; it
+              controls the session.</span
+            >
+          </div>
+        </aside>
+      </div>
+      <p class="workspace-footnote">
+        You do the talking. PicPocket takes care of the view.
+      </p>
     </main>
   </body>
 </html>

@@ -2,168 +2,146 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PicPocket Audience</title>
-    <style>
-      :root {
-        --bg: #101722;
-        --button: #2563eb;
-        --button-active: #1d4ed8;
-        --ink: #ffffff;
-        --muted: #b9c5d6;
-        --save: #16a34a;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-      }
-
-      body {
-        background: var(--bg);
-        color: var(--ink);
-        font-family:
-          Inter,
-          ui-sans-serif,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-      }
-
-      .viewer {
-        width: 100vw;
-        height: calc(100vh - 86px);
-        display: grid;
-        place-items: center;
-        overflow: hidden;
-        touch-action: none;
-      }
-
-      #slideDisplay {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        display: none;
-        user-select: none;
-        -webkit-user-drag: none;
-        transform-origin: center;
-      }
-
-      #notConnectedMsg {
-        color: var(--muted);
-        font-size: clamp(1rem, 3vw, 1.35rem);
-        line-height: 1.5;
-        padding: 24px;
-        position: absolute;
-        text-align: center;
-      }
-
-      .save-btn {
-        position: fixed;
-        right: 18px;
-        bottom: 104px;
-        z-index: 10;
-        background: var(--save);
-        color: #ffffff;
-        border: 0;
-        border-radius: 999px;
-        min-width: 56px;
-        min-height: 56px;
-        padding: 0 20px;
-        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.26);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        font-weight: 800;
-        cursor: pointer;
-      }
-
-      .footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100vw;
-        min-height: 86px;
-        display: grid;
-        place-items: center;
-        gap: 4px;
-        background: rgba(16, 23, 34, 0.96);
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 14px;
-        z-index: 10;
-      }
-
-      .share-link-btn {
-        background: var(--button);
-        color: #ffffff;
-        border: 0;
-        border-radius: 999px;
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: 800;
-        min-height: 42px;
-        padding: 0 20px;
-      }
-
-      .share-link-btn:disabled {
-        background: #64748b;
-        cursor: not-allowed;
-      }
-
-      .share-link-btn:active:not(:disabled) {
-        background: var(--button-active);
-      }
-
-      #sessionIdDisplay {
-        color: #c6d3ff;
-        font-size: 0.92rem;
-      }
-
-      @media (max-width: 700px) {
-        .viewer {
-          height: calc(100vh - 76px);
-        }
-
-        .footer {
-          min-height: 76px;
-        }
-
-        .save-btn {
-          right: 14px;
-          bottom: 88px;
-          min-width: 50px;
-          min-height: 50px;
-          padding: 0 16px;
-        }
-      }
-    </style>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#201b2c" />
+    <title>Live presentation — PicPocket</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script defer src="/js/ui.js"></script>
     <script defer src="/js/audience.js"></script>
   </head>
-  <body>
-    <main class="viewer">
-      <img id="slideDisplay" alt="Live presentation slide" />
-      <div id="notConnectedMsg">
-        Not connected yet.<br />Waiting for presenter...
+  <body class="viewer-page">
+    <a class="skip-link" href="#main">Skip to presentation</a>
+    <header class="viewer-header">
+      <a class="brand" href="/" aria-label="PicPocket home"
+        ><span class="brand-mark"
+          ><svg class="icon" aria-hidden="true">
+            <use href="/icons.svg#pocket" /></svg></span
+        >picpocket</a
+      >
+      <div class="viewer-header-tools">
+        <div class="viewer-session">
+          <span id="sessionIdDisplay" translate="no"></span
+          ><span class="status-pill"
+            ><span class="status-dot" aria-hidden="true"></span
+            ><span id="connectionStatus" role="status">Connecting</span></span
+          >
+        </div>
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="Quick guide"
+          title="Quick guide"
+          data-guide-open
+        >
+          <svg class="icon" aria-hidden="true">
+            <use href="/icons.svg#help" />
+          </svg>
+        </button>
       </div>
+    </header>
+    <main id="main" class="viewer" aria-label="Live presentation">
+      <img
+        id="slideDisplay"
+        alt="Live presentation slide"
+        tabindex="0"
+        aria-describedby="viewerInstructions"
+      />
+      <div id="emptyState" class="viewer-empty">
+        <div class="empty-illustration" aria-hidden="true">
+          <div class="empty-screen">
+            <svg class="icon"><use href="/icons.svg#screen" /></svg>
+          </div>
+          <div class="empty-phone">
+            <svg class="icon"><use href="/icons.svg#pocket" /></svg>
+          </div>
+        </div>
+        <h1 id="emptyTitle">You’ve got a good seat.</h1>
+        <p id="notConnectedMsg" role="status">
+          Connecting to your presentation…
+        </p>
+        <p class="empty-note">
+          No need to refresh. The view updates automatically.
+        </p>
+      </div>
+      <p id="viewerFeedback" class="toast" role="status" hidden></p>
     </main>
-
-    <button id="saveButton" class="save-btn" type="button">Save</button>
-
-    <footer class="footer">
-      <button id="copyLinkButton" class="share-link-btn" type="button">
-        Share Link
-      </button>
-      <div id="sessionIdDisplay"></div>
+    <details
+      id="viewerGuide"
+      class="viewer-guide"
+      data-onboarding="audience"
+      open
+    >
+      <summary>Your pocket-sized guide</summary>
+      <p id="viewerInstructions">
+        Pinch or use + and − to zoom. Drag to look around; with the slide
+        focused, use arrow keys to pan. Double-tap or choose Fit to reset. Save
+        downloads the current slide.
+      </p>
+      <button type="button" data-guide-dismiss>Got it</button>
+    </details>
+    <footer class="footer" aria-label="Presentation controls">
+      <div class="viewer-tools">
+        <div class="zoom-tools" role="group" aria-label="Slide zoom">
+          <button
+            id="zoomOutButton"
+            class="icon-button"
+            type="button"
+            aria-label="Zoom out"
+            title="Zoom out"
+            disabled
+          >
+            <svg class="icon" aria-hidden="true">
+              <use href="/icons.svg#minus" />
+            </svg>
+          </button>
+          <span id="zoomValue" class="zoom-value" aria-live="polite">100%</span>
+          <button
+            id="zoomInButton"
+            class="icon-button"
+            type="button"
+            aria-label="Zoom in"
+            title="Zoom in"
+            disabled
+          >
+            <svg class="icon" aria-hidden="true">
+              <use href="/icons.svg#plus" />
+            </svg>
+          </button>
+          <button
+            id="resetZoomButton"
+            class="icon-button"
+            type="button"
+            aria-label="Fit slide"
+            title="Fit slide"
+            disabled
+          >
+            <svg class="icon" aria-hidden="true">
+              <use href="/icons.svg#fit" />
+            </svg>
+          </button>
+        </div>
+        <span class="viewer-hint">A little closer, whenever you need.</span>
+      </div>
+      <div class="viewer-tools">
+        <button
+          id="copyLinkButton"
+          class="button button-secondary share-link-btn"
+          type="button"
+        >
+          <svg class="icon" aria-hidden="true">
+            <use href="/icons.svg#link" /></svg
+          ><span>Share Link</span>
+        </button>
+        <button id="saveButton" class="button save-btn" type="button">
+          <svg class="icon" aria-hidden="true">
+            <use href="/icons.svg#download" /></svg
+          >Save
+        </button>
+      </div>
     </footer>
   </body>
 </html>

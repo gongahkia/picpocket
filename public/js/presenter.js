@@ -23,6 +23,9 @@
     mediaStream: null,
     sendIntervalId: null,
     serverAlive: true,
+    captureSupported: Boolean(
+      navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia,
+    ),
     sessionId: "",
     token: "",
     ws: null,
@@ -30,6 +33,10 @@
 
   const statusEl = document.getElementById("status");
   const sessionBadge = document.getElementById("sessionBadge");
+  const sessionCode = document.getElementById("sessionCode");
+  const captureSupportMessage = document.getElementById(
+    "captureSupportMessage",
+  );
   const qrCodeImage = document.getElementById("qrCodeImage");
   const startSharingButton = document.getElementById("startSharingButton");
   const stopSharingButton = document.getElementById("stopSharingButton");
@@ -77,14 +84,21 @@
     );
 
     state.ws.onopen = function () {
-      setStatus("Ready to share. Click 'Start Sharing Screen'.");
-      sessionBadge.textContent = `Session: ${state.sessionId}`;
-      startSharingButton.disabled = false;
+      setStatus(
+        state.captureSupported
+          ? "Your audience can join now. Choose a screen whenever you’re ready."
+          : "Your session is ready, but this browser can’t share a screen. Use a supported desktop browser to present.",
+      );
+      sessionBadge.textContent = state.captureSupported
+        ? "Ready to share"
+        : "Desktop required";
+      startSharingButton.disabled = !state.captureSupported;
       stopSharingButton.disabled = true;
-      startNewSessionButton.style.display = "none";
+      startNewSessionButton.hidden = true;
     };
 
     state.ws.onclose = function () {
+      stopCapture();
       if (!state.serverAlive) return;
       setStatus(
         "Session not found or expired. Start a new session to continue.",
@@ -92,17 +106,18 @@
       sessionBadge.textContent = "Expired";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = true;
-      startNewSessionButton.style.display = "inline-flex";
+      startNewSessionButton.hidden = false;
     };
 
     state.ws.onerror = function () {
+      stopCapture();
       setStatus(
         "Connection error. Check your network and start a new session if needed.",
       );
       sessionBadge.textContent = "Connection error";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = true;
-      startNewSessionButton.style.display = "inline-flex";
+      startNewSessionButton.hidden = false;
     };
   }
 
@@ -141,6 +156,7 @@
   }
 
   function initialize() {
+    captureSupportMessage.hidden = state.captureSupported;
     const urlParams = new URLSearchParams(window.location.search);
     state.sessionId = urlParams.get("id") || "";
     state.token = urlParams.get("token") || "";
@@ -148,12 +164,13 @@
     if (!state.sessionId || !state.token) {
       setStatus("Presenter credentials are missing. Start from the main page.");
       sessionBadge.textContent = "Missing session";
-      startNewSessionButton.style.display = "inline-flex";
+      startNewSessionButton.hidden = false;
       return;
     }
 
     const joinUrl = `${window.location.origin}/join/${state.sessionId}`;
     joinLinkInput.value = joinUrl;
+    sessionCode.textContent = state.sessionId;
     qrCodeImage.src = `/api/qrcode?data=${encodeURIComponent(joinUrl)}`;
     qrCodeImage.hidden = false;
 
@@ -161,16 +178,6 @@
     sessionBadge.textContent = "Connecting";
     connectWebSocket();
     startServerPing();
-
-    if (
-      !(
-        "mediaDevices" in navigator &&
-        "getDisplayMedia" in navigator.mediaDevices
-      )
-    ) {
-      setStatus("Screen sharing is only supported in desktop browsers.");
-      startSharingButton.disabled = true;
-    }
   }
 
   async function copyText(text) {
@@ -180,12 +187,17 @@
     }
 
     joinLinkInput.select();
-    document.execCommand("copy");
+    const copied = document.execCommand("copy");
     window.getSelection().removeAllRanges();
+    if (!copied) throw new Error("Copy unavailable");
   }
 
   async function startScreenSharing() {
+    if (!state.captureSupported || state.ws?.readyState !== WebSocket.OPEN)
+      return;
     noPermissionMessage.style.display = "none";
+    startSharingButton.disabled = true;
+    setStatus("Choose what to share in your browser’s screen picker.");
 
     try {
       state.mediaStream = await navigator.mediaDevices.getDisplayMedia({
@@ -193,37 +205,45 @@
         video: { cursor: "always" },
       });
 
-      previewVideo.srcObject = state.mediaStream;
+      if (state.ws.readyState !== WebSocket.OPEN) {
+        throw new Error("Session disconnected while choosing a screen");
+      }
+
       previewVideo.style.display = "block";
 
       await new Promise((resolve) => {
         previewVideo.onloadedmetadata = resolve;
+        previewVideo.srcObject = state.mediaStream;
       });
 
       await previewVideo.play();
       configureCaptureCanvas();
       startSendingFramesLoop();
+      document.body.dataset.sharing = "true";
 
       setStatus(
         "Sharing screen. Audience members will see updates automatically.",
       );
-      sessionBadge.textContent = `Live: ${state.sessionId}`;
+      sessionBadge.textContent = "Sharing live";
       startSharingButton.disabled = true;
       stopSharingButton.disabled = false;
-      startNewSessionButton.style.display = "none";
+      startNewSessionButton.hidden = true;
 
       state.mediaStream.getTracks().forEach((track) => {
         track.onended = stopPresenting;
       });
     } catch (error) {
-      setStatus("Unable to start screen sharing.");
+      stopCapture();
+      setStatus(
+        "Screen sharing didn’t start. Try again and choose a tab, window, or screen.",
+      );
       if (
         error.name === "NotAllowedError" ||
         error.name === "PermissionDeniedError"
       ) {
         noPermissionMessage.style.display = "block";
       }
-      startSharingButton.disabled = false;
+      startSharingButton.disabled = state.ws?.readyState !== WebSocket.OPEN;
       stopSharingButton.disabled = true;
     }
   }
@@ -316,6 +336,7 @@
         if (!state.serverAlive) window.location.reload();
       } catch {
         state.serverAlive = false;
+        stopCapture();
         setStatus(
           "Server is unavailable. Start a new session when it is back online.",
         );
@@ -324,12 +345,25 @@
         stopSharingButton.disabled = true;
         copyLinkButton.disabled = true;
         openAudienceButton.disabled = true;
-        startNewSessionButton.style.display = "inline-flex";
+        startNewSessionButton.hidden = false;
       }
     }, 5000);
   }
 
   function stopPresenting() {
+    stopCapture();
+
+    sendPresenterMessage({ type: MESSAGE_TYPES.AWAITING });
+
+    setStatus("Screen sharing stopped. You can select a new screen to share.");
+    sessionBadge.textContent = "Sharing paused";
+    startSharingButton.disabled =
+      !state.captureSupported || state.ws?.readyState !== WebSocket.OPEN;
+    stopSharingButton.disabled = true;
+    startNewSessionButton.hidden = false;
+  }
+
+  function stopCapture() {
     if (state.mediaStream) {
       state.mediaStream.getTracks().forEach((track) => {
         track.onended = null;
@@ -344,14 +378,7 @@
     previewVideo.style.display = "none";
     state.firstFrameSent = false;
     state.lastCompareData = null;
-
-    sendPresenterMessage({ type: MESSAGE_TYPES.AWAITING });
-
-    setStatus("Screen sharing stopped. You can select a new screen to share.");
-    sessionBadge.textContent = `Session: ${state.sessionId}`;
-    startSharingButton.disabled = false;
-    stopSharingButton.disabled = true;
-    startNewSessionButton.style.display = "inline-flex";
+    document.body.dataset.sharing = "false";
   }
 
   function stopSendingFrames() {
