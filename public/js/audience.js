@@ -294,6 +294,7 @@
     try {
       await copyText(copyLinkButton.dataset.link);
       copyLinkButton.querySelector("span").textContent = "Copied";
+      showFeedback("Audience link copied.");
       setTimeout(function () {
         copyLinkButton.querySelector("span").textContent = "Share Link";
       }, 1200);

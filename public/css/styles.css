@@ -881,6 +881,8 @@ body[data-sharing="true"] .preview-placeholder {
   place-items: center;
 }
 #slideDisplay {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -1522,6 +1524,16 @@ body[data-sharing="true"] .preview-placeholder {
   .viewer-page .brand {
     font-size: 0;
     gap: 0;
+  }
+  .viewer-page .share-link-btn {
+    width: 44px;
+    padding: 0;
+  }
+  .share-link-btn span {
+    display: none;
+  }
+  .share-link-btn .icon {
+    display: block;
   }
 }
 @media (prefers-reduced-motion: reduce) {

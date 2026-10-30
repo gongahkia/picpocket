@@ -52,11 +52,21 @@ test("audience receives and saves a relayed frame", async ({
 
   await audience.getByRole("button", { name: "Zoom in", exact: true }).click();
   await expect(audience.locator("#zoomValue")).toHaveText("125%");
-  await page.evaluate((imageData) => {
+  const nextFrame = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 2;
+    canvas.height = 2;
+    canvas.getContext("2d").fillRect(0, 0, 2, 2);
+    const imageData = canvas.toDataURL("image/png");
     window.__picpocketPresenterWs.send(
       JSON.stringify({ imageData, type: "frame" }),
     );
-  }, SAMPLE_PNG);
+    return imageData;
+  });
+  await expect(audience.locator("#slideDisplay")).toHaveAttribute(
+    "src",
+    nextFrame,
+  );
   await expect(audience.locator("#slideDisplay")).toHaveCSS(
     "transform",
     /1\.25/,
@@ -66,6 +76,24 @@ test("audience receives and saves a relayed frame", async ({
   await expect(audience.locator("#slideDisplay")).toHaveCSS("transform", /-30/);
   await audience.getByRole("button", { name: "Fit slide" }).click();
   await expect(audience.locator("#zoomValue")).toHaveText("100%");
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 844, height: 390 },
+  ]) {
+    await audience.setViewportSize(viewport);
+    expect(
+      await audience.locator("#slideDisplay").evaluate((img) => {
+        const image = img.getBoundingClientRect();
+        const viewer = img.parentElement.getBoundingClientRect();
+        return (
+          image.top >= viewer.top &&
+          image.bottom <= viewer.bottom &&
+          image.left >= viewer.left &&
+          image.right <= viewer.right
+        );
+      }),
+    ).toBe(true);
+  }
 
   const downloadPromise = audience.waitForEvent("download");
   await audience.getByRole("button", { name: "Save" }).click();
@@ -98,6 +126,36 @@ test("audience view fits mobile viewport", async ({ browser, page }) => {
       ),
     )
     .toBe(true);
+
+  await sendPresenterFrame(page, session);
+  await expect(audience.locator("#slideDisplay")).toBeVisible();
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ]) {
+    await audience.setViewportSize(viewport);
+    expect(
+      await audience.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    for (const name of [
+      "Zoom in",
+      "Fit slide",
+      "Share Link",
+      "Save",
+      "Quick guide",
+    ]) {
+      await expect(
+        audience.getByRole("button", { name, exact: true }),
+      ).toBeInViewport({ ratio: 1 });
+    }
+  }
+  await audience.getByRole("button", { name: "Got it", exact: true }).click();
+  await expect(audience.locator("#viewerGuide")).toBeHidden();
+  await audience.getByRole("button", { name: "Quick guide" }).click();
+  await expect(audience.locator("#viewerGuide")).toBeVisible();
 
   await mobile.close();
 });
@@ -138,36 +196,6 @@ test("unsupported presenter browsers stay disabled after the session connects", 
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-
-    await sendPresenterFrame(page, session);
-    await expect(audience.locator("#slideDisplay")).toBeVisible();
-    for (const viewport of [
-      { width: 320, height: 568 },
-      { width: 390, height: 844 },
-      { width: 844, height: 390 },
-    ]) {
-      await audience.setViewportSize(viewport);
-      expect(
-        await audience.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-      ).toBe(true);
-      for (const name of [
-        "Zoom in",
-        "Fit slide",
-        "Share Link",
-        "Save",
-        "Quick guide",
-      ]) {
-        await expect(
-          audience.getByRole("button", { name, exact: true }),
-        ).toBeInViewport();
-      }
-    }
-    await audience.getByRole("button", { name: "Got it", exact: true }).click();
-    await expect(audience.locator("#viewerGuide")).toBeHidden();
-    await audience.getByRole("button", { name: "Quick guide" }).click();
-    await expect(audience.locator("#viewerGuide")).toBeVisible();
   }
 });
 
@@ -177,7 +205,10 @@ test("screen capture handles permission denial, live frames, pause, and restart"
 }) => {
   await page.addInitScript(() => {
     let calls = 0;
-    Object.defineProperty(navigator.mediaDevices, "getDisplayMedia", {
+    // retain the mocked wrapper when WebKit opens another tab.
+    const mediaDevices = navigator.mediaDevices;
+    Object.defineProperty(navigator, "mediaDevices", { value: mediaDevices });
+    Object.defineProperty(mediaDevices, "getDisplayMedia", {
       value: async () => {
         calls += 1;
         if (calls === 1) throw new DOMException("Denied", "NotAllowedError");
