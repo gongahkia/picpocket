@@ -9,6 +9,8 @@ const { compressToPng, parseImageDataUrl } = require("../src/imageService");
 const { broadcast } = require("../src/websocket");
 
 const SAMPLE_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
+const CORRUPT_PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
 const SAMPLE_JPEG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w==";
 
@@ -207,6 +209,9 @@ test("image save endpoint validates and returns compressed PNG", async () => {
   assert.equal(valid.statusCode, 200);
   assert.equal(valid.headers["content-type"], "image/png");
   assert.ok(valid.body.length > 0);
+  const metadata = await sharp(valid.body).metadata();
+  assert.equal(metadata.width, 1);
+  assert.equal(metadata.height, 1);
 
   const invalid = await httpRequest(instance.origin, "/api/save-image", {
     body: JSON.stringify({ imageData: "not-image-data" }),
@@ -217,7 +222,9 @@ test("image save endpoint validates and returns compressed PNG", async () => {
   assert.equal(invalid.statusCode, 400);
 });
 
-test("image validation rejects bad base64 and oversized images", async () => {
+test("image validation rejects bad base64, corrupt PNGs, and oversized images", async () => {
+  await assert.rejects(compressToPng(CORRUPT_PNG));
+
   assert.throws(
     () =>
       parseImageDataUrl("data:image/png;base64,abc", {
