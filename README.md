@@ -1,14 +1,10 @@
-[![](https://img.shields.io/badge/picpocket_1.0.0-passing-green)](https://github.com/gongahkia/tanabata/releases/tag/1.0.0)
-![](https://github.com/gongahkia/picpocket/actions/workflows/ci.yml/badge.svg)
+[![](https://img.shields.io/badge/picpocket_1.0.0-passing-green)](https://github.com/gongahkia/picpocket/releases/tag/1.0.0)
 ![](https://img.shields.io/badge/picpocket_1.0.0-deployment_up-light_green)
+![](https://github.com/gongahkia/picpocket/actions/workflows/ci.yml/badge.svg)
 
 # `PicPocket`
 
 [Share Screen](https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060596) for [IRL](https://dictionary.cambridge.org/dictionary/english/irl) presentations.
-
-<div align="center">
-  <img src="./asset/see.jpeg" width="50%" alt="Person looking at a presentation" />
-</div>
 
 ## What does PicPocket do?
 
